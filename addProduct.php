@@ -1,4 +1,4 @@
-1. Добавляем продукт
+<!--1. Добавляем продукт
 INSERT INTO `oc_product` (`product_id`, `model`, `sku`, `upc`, `ean`, `jan`, `isbn`, `mpn`, `location`, `quantity`, `stock_status_id`, `image`, `manufacturer_id`, `shipping`, `price`, `points`, `tax_class_id`, `date_available`, `weight`, `weight_class_id`, `length`, `width`, `height`, `length_class_id`, `subtract`, `minimum`, `sort_order`, `status`, `viewed`, `date_added`, `date_modified`) VALUES
 ('', '7938', '', '', '', '', '978-5-94759-201-6', '', '', 6, 7, 'catalog/images/evangelskie-besedy-na-kazhdyj-den-goda-po-cerkovnym-zachalam-main.jpg', 26, 1, '419.0000', 0, 0, '', '550.00', 2, '12.50', '17.00', '4.00', 1, 1, 1, 1, 1, 0, now(), '0000-00-00 00:00:00');
 
@@ -27,4 +27,26 @@ INSERT INTO `oc_product_to_layout` (`product_id`, `store_id`, `layout_id`) VALUE
 
 6. Указываем, что товар в будет продаваться в этом магазине
 INSERT INTO `oc_product_to_store` (`product_id`, `store_id`) VALUES
-(1, 0);
+(1, 0);-->
+<?php
+
+//1. Добавляем продукт
+
+//2. Добавляем описание
+
+//3. Добавляем дополнительные картинки
+
+//4. Указываем категории товара
+
+//5. Назначаем layout
+
+//6. Указываем, что товар в будет продаваться в этом магазине
+
+// Все пункты надо обернуть в одну транзакцию
+
+// sandbox
+$post = R::dispense( 'post' );
+$post->title = 'My holiday';
+$id = R::store( $post );
+
+?>
