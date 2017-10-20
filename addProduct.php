@@ -45,8 +45,5 @@ INSERT INTO `oc_product_to_store` (`product_id`, `store_id`) VALUES
 // Все пункты надо обернуть в одну транзакцию
 
 // sandbox
-$post = R::dispense( 'post' );
-$post->title = 'My holiday';
-$id = R::store( $post );
-
+phpinfo();
 ?>
