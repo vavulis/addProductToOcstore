@@ -1,6 +1,6 @@
 <?php
-$dbHost = 'localhost';
-$dbLogin = 'kos';
+$dbHost = '127.0.0.1';
+$dbLogin = 'semenoh3_tst';
 $dbPassword = '123456';
-$dbName = 'kos';
+$dbName = 'semenoh3_tst';
 ?>

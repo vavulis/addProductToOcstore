@@ -16,8 +16,8 @@ INSERT INTO `oc_product_image` (`product_image_id`, `product_id`, `image`, `sort
 
 
 4. Указываем категории товара
-INSERT INTO `oc_product_to_category` (`product_id`, `category_id`, `main_category`) VALUES
-(1, 75, 1);
+INSERT INTO `oc_product_to_category` (`product_id`, `category_id`) VALUES
+(1, 75);
 
 
 5. Назначаем layout
@@ -30,20 +30,6 @@ INSERT INTO `oc_product_to_store` (`product_id`, `store_id`) VALUES
 (1, 0);-->
 <?php
 
-//1. Добавляем продукт
 
-//2. Добавляем описание
 
-//3. Добавляем дополнительные картинки
-
-//4. Указываем категории товара
-
-//5. Назначаем layout
-
-//6. Указываем, что товар в будет продаваться в этом магазине
-
-// Все пункты надо обернуть в одну транзакцию
-
-// sandbox
-phpinfo();
 ?>
