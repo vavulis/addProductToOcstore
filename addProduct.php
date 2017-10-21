@@ -27,7 +27,23 @@ INSERT INTO `oc_product_to_layout` (`product_id`, `store_id`, `layout_id`) VALUE
 
 6. Указываем, что товар в будет продаваться в этом магазине
 INSERT INTO `oc_product_to_store` (`product_id`, `store_id`) VALUES
-(1, 0);-->
+(1, 0);
+
+7. Добавляем группу атрибутов
+INSERT INTO `oc_attribute_group` (`sort_order`) VALUES
+(0);INSERT INTO `oc_attribute_group_description` (`attribute_group_id`, `language_id`, `name`) VALUES
+(LAST_INSERT_ID(), 1, 'Информация о товаре');
+
+8. Добавляем атрибут в группу. Номер группы=4
+INSERT INTO `oc_attribute` (`attribute_group_id`, `sort_order`) VALUES
+(4, 0);INSERT INTO `oc_attribute_description` (`attribute_id`, `language_id`, `name`) VALUES
+(LAST_INSERT_ID(), 1, 'Год издания');
+
+9. Добавляем атрубит к товару и задаем иму значение
+INSERT INTO `oc_product_attribute` (`product_id`, `attribute_id`, `language_id`, `text`) VALUES
+(1, 6, 1, '1975');
+
+-->
 <?php
 
 
