@@ -12,9 +12,13 @@ if ( !R::testConnection() ) {
 else 
     echo "К базе подключилось норм! <br>";
 
+
+
 // Тут происходит самое интересное --------------------------------
 require 'Product.php';
 $product = new Product();
+
+
 
 // Заполняем основные поля товара
 $language_id = 1;
@@ -28,6 +32,8 @@ $meta_keyword='Евангелие, Иоанн Златоуст, Толкован
 $product->addDescriptionToProduct($language_id, $name, $description, $tag, $meta_title, $meta_h1, $meta_description, $meta_keyword);
 print_r($product->descriptions);
 
+
+
 // Добавляем картинки
 $images = array(
     'catalog/images/evangelskie-besedy-na-kazhdyj-den-goda-po-cerkovnym-zachalam-1.jpg',
@@ -38,6 +44,8 @@ $images = array(
 $product->addImagesToProduct($images);
 print_r($product->images);
 
+
+
 // Назначаем товару категории
 $categories = array(
     75
@@ -45,7 +53,18 @@ $categories = array(
 $product->addCategoriesToProduct($categories);
 print_r($product->categories);
 
+
+
+// Добавляем атрибуты
+$attributes = "Артикул:13497|Код товара:94017|Дата поступления:29.09.2017|Издательство: Правило веры, Москва|Год издания:2017|Тираж:2000|Страниц:960|Бумага:офсетная|Вес:680|Тираж:2000|ISBN:978-5-94759-224-5|Гриф ИС:Р17-720-3449|Формат:70x100/32|Размер: 12,5 см. X 17 см. X 4,4 см.";
+$product->addAttributesToProduct($attributes);
+print_r($product->attributes);
+
+
+
 // закончилось ----------------------------------------------------
+
+
 
 // Отключаемся от базы
 R::close();

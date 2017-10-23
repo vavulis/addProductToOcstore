@@ -46,6 +46,22 @@ class Product {
     // Категории товара. Таблица oc_product_to_category
     var $categories = [];
     
+    // Атрибуты товара. oc_attribute_group, oc_attribute, oc_product_attribute
+    var $attributes = [];
+    
+    // Добавляем атрибуты к товару
+    // Если атрибут, переданный в параметре функции не существует - от создастся
+    // $attributes = "Артикул:13497|Код товара:94017|Дата поступления:29.09.2017|Издательство: Правило веры, Москва"
+    function addAttributesToProduct($attributes) {
+        $attributes = explode("|", $attributes);
+        foreach ($attributes as $attribute) {             
+            $t = explode(":", $attribute);
+            // если есть пара ключ:значение, то добавляем в атрибуты
+            if ( count($t) == 2 )
+                $this->attributes[trim($t[0])] = trim($t[1]);
+        }
+    }
+    
     // Назначаем товару категории
     function addCategoriesToProduct($categories) {
         $this->categories = $categories;
@@ -109,8 +125,17 @@ class Product {
         
     }
     
-    // Добавляет продукт
-    function addProductToMysql() {
+    // $categories = "Главная|Аскетические книги|Святые отцы";
+    // $return = "sql код, необходимый для создания  категорий и подкатегорий, если их нет"
+    function addCategoryToMysql($categories) {
         
     }
+    
+    //
+    function addAttributeToMysql() {
+        
+    }
+    
+
+  
 }
