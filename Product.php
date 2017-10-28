@@ -37,20 +37,42 @@ class Product {
     var $date_added; // now()
     var $date_modified; // '0000-00-00 00:00:00'
     
-    // Описания товара на разных языках
+    // Описание товара
+//    $this->descriptions[$language_id] = array(
+//            "name" => $name,
+//            "description" => $description,
+//            "tag" => $tag,
+//            "meta_title" => $meta_title,
+//            "meta_h1" => $meta_h1,
+//            "meta_description" => $meta_description,
+//            "meta_keyword" => $meta_keyword
+//        );
     var $descriptions = [];
-    
-    // Картинки товара. Таблица oc_product_image
-    var $images = [];
-    
-    // Категории товара. Таблица oc_product_to_category
+    // Картинки товара.
+    var $images = [];   
+    // Основная иерархия категорий товара, хлебные крошки
     var $categories = [];
-    
-    // Атрибуты товара. oc_attribute_group, oc_attribute, oc_product_attribute
+    // alias для категории для seopro
+    var $category_alias_seopro = '';
+    // alias для товара для seopro
+    var $product_alias_seopro = '';
+    // Атрибуты товара и их значения. [ 'atr1' => 10, ... ]
     var $attributes = [];
+    // Группы атрибутов. [ 'group_id1' => 'group_name1', ... ]
+    var $groups_of_attributes = [];
+    // Файл логов
+    var $log_file = 'log.txt';
     
-    // Добавляем атрибуты к товару
-    // Если атрибут, переданный в параметре функции не существует - от создастся
+    
+    
+    // Конструктор класса
+    function Product() {
+        // Задаем основные параметры товара
+        $this->getParamsFromPost();
+    }
+    
+    
+   
     // $attributes = "Артикул:13497|Код товара:94017|Дата поступления:29.09.2017|Издательство: Правило веры, Москва"
     function addAttributesToProduct($attributes) {
         $attributes = explode("|", $attributes);
@@ -61,81 +83,138 @@ class Product {
                 $this->attributes[trim($t[0])] = trim($t[1]);
         }
     }
-    
-    // Назначаем товару категории
-    function addCategoriesToProduct($categories) {
-        $this->categories = $categories;
-    }
-    
-    // Добавляем картинки. А точнее пути к картинкам.
-    function addImagesToProduct($images) {
-        $this->images = $images;
-    }
-    
-    // Добавляет описание с заданным языком к товару
-    function addDescriptionToProduct($language_id, $name, $description, $tag, $meta_title, $meta_h1, $meta_description, $meta_keyword) {
-        $this->descriptions[$language_id] = array(
-            "name" => $name,
-            "description" => $description,
-            "tag" => $tag,
-            "meta_title" => $meta_title,
-            "meta_h1" => $meta_h1,
-            "meta_description" => $meta_description,
-            "meta_keyword" => $meta_keyword
-        );
-    }
-    
-    // Конструктор. Заполняем поля из массива POST
-    function Product() {
-        $this->product_id = $_POST['product_id'];
-        $this->model = $_POST['model'];
-        $this->sku = $_POST['sku'];
-        $this->upc = $_POST['upc'];
-        $this->ean = $_POST['ean'];
-        $this->jan = $_POST['jan'];
-        $this->isbn = $_POST['isbn'];
-        $this->mpn = $_POST['mpn'];
-        $this->location = $_POST['location'];
-        $this->quantity = $_POST['quantity'];
-        $this->stock_status_id = $_POST['stock_status_id'];
-        $this->image = $_POST['image'];
-        $this->manufacturer_id = $_POST['manufacturer_id'];
-        $this->shipping = $_POST['shipping'];
-        $this->price = $_POST['price'];
-        $this->points = $_POST['point'];
-        $this->tax_class_id = $_POST['tax_class_id'];
-        $this->date_available = $_POST['date_available'];
-        $this->weight = $_POST['weight'];
-        $this->weight_class_id = $_POST['weight_class_id'];
-        $this->length = $_POST['length'];
-        $this->width = $_POST['width'];
-        $this->height = $_POST['height'];
-        $this->length_class_id = $_POST['length_class_id'];
-        $this->subtract = $_POST['subtract'];
-        $this->minimum = $_POST['minimum'];
-        $this->sort_order = $_POST['sort_order'];
-        $this->status = $_POST['status'];
-        $this->viewed = $_POST['viewed'];
-        $this->date_added = $_POST['date_added'];
-        $this->date_modified = $_POST['date_modified'];
-    }
-    
-    // Проверяет заполнены ли все нужные поля для добавления товара
-    function checkFilds() {
-        
-    }
-    
-    // $categories = "Главная|Аскетические книги|Святые отцы";
-    // $return = "sql код, необходимый для создания  категорий и подкатегорий, если их нет"
-    function addCategoryToMysql($categories) {
-        
-    }
-    
-    //
-    function addAttributeToMysql() {
-        
-    }
-    
 
-  
+    
+       
+    function addProductToDB() {
+        // надо сохранить product_id
+        echo "addProductToDB();<br>";
+    }
+    
+    
+    
+    function addDescriptionToDB() {
+        echo "addDescriptionToDB();<br>";
+    }
+    
+    
+    
+    function addImagesToDB() {
+        echo "addImagesToDB();<br>";
+    }
+    
+    
+    
+    function addLayoutToDB() {
+        echo "addLayoutToDB();<br>";
+    }
+    
+    
+    
+    function addMagazineToDB() {
+        echo "addMagazineToDB();<br>";
+    }
+    
+    
+    
+    // создаем категории, добавляем описания, регистрируем категории в магазине, если надо добавляем алиасы к категориям в сео-про (можно и руками, категорий не много)
+    function addCategoryToDB() {
+        echo "addCategoryToDB();<br>";
+    }
+    
+    
+    
+    // назначаем товару категории
+    function setCategoriesToDB() {
+        echo "setCategoriesToDB();<br>";
+    }
+    
+    
+    
+    function addAttributesGroupToDB() {
+        echo "addAttributesGroupToDB();<br>";
+    }
+    
+    
+    
+    function addAttributesToDB() {
+        echo "addAttributesToDB();<br>";
+    }
+    
+    
+    
+    function setAttributesToDB() {
+        echo "setAttributesToDB();<br>";
+    }
+    
+    
+    
+    // задать алиас для продукта в seopro
+    function setProductAliasToDB() {
+        echo "setProductAliasToDB();<br>";
+    }
+    
+    
+    
+    // Заполняем свойства класса из массива $_POST
+    function getParamsFromPost() {
+        echo "getParamsFromPost();<br>";
+//        $this->model = $_POST['model'];
+//        $this->sku = $_POST['sku'];
+//        $this->upc = $_POST['upc'];
+//        $this->ean = $_POST['ean'];
+//        $this->jan = $_POST['jan'];
+//        $this->isbn = $_POST['isbn'];
+//        $this->mpn = $_POST['mpn'];
+//        $this->location = $_POST['location'];
+//        $this->quantity = $_POST['quantity'];
+//        $this->stock_status_id = $_POST['stock_status_id'];
+//        $this->image = $_POST['image'];
+//        $this->manufacturer_id = $_POST['manufacturer_id'];
+//        $this->shipping = $_POST['shipping'];
+//        $this->price = $_POST['price'];
+//        $this->points = $_POST['point'];
+//        $this->tax_class_id = $_POST['tax_class_id'];
+//        $this->date_available = $_POST['date_available'];
+//        $this->weight = $_POST['weight'];
+//        $this->weight_class_id = $_POST['weight_class_id'];
+//        $this->length = $_POST['length'];
+//        $this->width = $_POST['width'];
+//        $this->height = $_POST['height'];
+//        $this->length_class_id = $_POST['length_class_id'];
+//        $this->subtract = $_POST['subtract'];
+//        $this->minimum = $_POST['minimum'];
+//        $this->sort_order = $_POST['sort_order'];
+//        $this->status = $_POST['status'];
+//        $this->viewed = $_POST['viewed'];
+//        $this->date_added = $_POST['date_added'];
+//        $this->date_modified = $_POST['date_modified'];        
+    }
+    
+    
+    
+    function log($text) {
+        // пишем лог в файл $this->log_file
+    }
+    
+    
+    
+    function checkParams() {
+        echo "checkParams();<br>";
+    }
+    
+    
+    function mainPotok() {
+        echo "mainPotok();<br>";
+        $this->checkParams();
+        $this->addProductToDB();
+        $this->addDescriptionToDB();
+        $this->addLayoutToDB();
+        $this->addCategoryToDB();
+        $this->setCategoriesToDB();
+        $this->addAttributesGroupToDB();
+        $this->addAttributesToDB();
+        $this->setAttributesToDB();        
+    }
+    
 }
