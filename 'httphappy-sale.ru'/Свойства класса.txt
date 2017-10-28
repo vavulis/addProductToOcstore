@@ -1,0 +1,12 @@
+1. product_id // получаем id из sql-запроса при создании товара c помощью ф-ции LAST_INSERT_ID()
+	// в дальнейшем используем product_id в других ф-циях, таких, как addDescription()
+	// переменная создана для уменьшения кол-ва запросов в БД
+2. description // копируем из $_POST описание товара в description
+3. images // массив картинок
+4. categories // "cat1|cat2|cat3" - основная иерархия категорий товара, хлебные крошки
+5. category_alias_seopro // alias для категории для seopro
+6. product_alias_seopro // alias для товара для seopro
+7. attributes // Атрибуты товара и их значения. [ 'atr1' => 10, ... ]
+8. groups_of_attributes // Группы атрибутов. [ 'group_id1' => 'group_name1', ... ]
+
+

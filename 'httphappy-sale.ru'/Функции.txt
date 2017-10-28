@@ -1,0 +1,13 @@
+1. addProductToDB()
+2. addDescriptionToDB()
+3. addImagesToDB()
+4. addLayoutToDB()
+5. addMagazineToDB()
+6. addCategoryToDB() // создаем категории, добавляем описания, регистрируем категории в магазине, добавляем алиасы к категориям в сео-про
+7. setCategoriesToDB() // назначаем товару категории
+8. addAttributesGroupToDB()
+9. addAttributesToDB() // создаем атрибуты, задаем названия атрибутов
+10. setAttributesToDB() // назначаем товару атрибуты и задаем атрибутам значения
+11. setProductAliasToDB() // задать алиас для продукта в seopro
+12. checkParams() // проверка входных данных до правок в базе
+

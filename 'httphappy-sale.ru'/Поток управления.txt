@@ -1,0 +1,11 @@
+1. ¬ index.php пришли данные в POST массиве об одном продукте
+2. —оздаем объект, экземпл€р класса Product, и заполн€ем свойства класса из POST-массива
+3. addProductToDB(), в $this->product_id по€вл€етс€ id товара
+4. addDescriptionToDB() - добавили в opencart описание к товару
+5. addLayoutToDB() + addMagazineToDB() - это просто надо сделать
+6. addCategoryToDB() - добавл€ем в opencart категории
+7. setCategoriesToDB() - назначаем товару категории
+8. addAttributesGroupToDB() - создаем группу атрибутов, сохран€ем $attributes[attribute_group_id]=attribute_group_name;
+9. addAttributesToDB() - создаем атрибуты в opancart, задаем названи€ атрибутов в opencart
+10. setAttributesToDB() - добавл€ем атрибуты товару в opencart
+11. готово, товар добавлен в opencart
