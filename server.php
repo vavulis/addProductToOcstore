@@ -1,10 +1,43 @@
 <?php
-$db = mysql_connect("127.0.0.1", "semenoh3_tst", "123456");
-mysql_select_db("semenoh3_tst");
+
+header('Content-Type: text/html; charset=utf-8');
+// Подключаемся к базе данных
+require 'config.php';
+
+$db = mysql_connect($dbHost, $dbLogin, $dbPassword) or die("Mysql connect error");
+mysql_select_db($dbName);
 mysql_query("SET NAMES utf8");
-$_POST[name] = mysql_real_escape_string($_POST[name]);
-$_POST[price] = mysql_real_escape_string($_POST[price]);
-$_POST[description] = mysql_real_escape_string($_POST[description]);
-$_POST[image] = mysql_real_escape_string($_POST[image]);
-mysql_query("INSERT INTO product (name, price, description, image) VALUES ('$_POST[name]', '$_POST[price]', '$_POST[description]', '$_POST[image]')");
+
+
+
+// Начало --------------------------------
+require 'Product.php';
+
+$product = new Product();
+
+$product->mainPotok();
+
+// Конец ---------------------------------
+// Заполняем основные поля товара
+//$language_id = 1;
+//$name = 'Евангельские беседы на каждый день года по церковным зачалам';
+//$description = '&lt;p&gt;Книга «Евангельские беседы на каждый день» включает в себя толкования на Евангелие святителя Иоанна Златоустого, блаженного Феофилакта Болгарского, святителя Феофана Затворника и других святых отцов, а также подробные исторические комментарии о быте, законах и обычаях современников земной жизни Спасителя. Толкования расположены по ежедневным Евангельским чтениям (церковным зачалам).&lt;/p&gt;\r\n\r\n&lt;p&gt;Издание будет интересно всем православным христианам: и мирянам — для чтения дома, в семье, и священнослужителям — для произнесения проповедей, и учащимся церковных учебных заведений.&lt;/p&gt;\r\n\r\n&lt;p&gt;Рекомендовано к публикации Издательским Советом Русской Православной Церкви.&lt;/p&gt;\r\n';
+//$tag = '';
+//$meta_title = 'Евангельские беседы на каждый день года по церковным зачалам. Православные книги почтой в магазине http://shop.konstantinsemenov.com';
+//$meta_h1 = 'Евангельские беседы на каждый день года по церковным зачалам';
+//$meta_description = 'Книга «Евангельские беседы на каждый день» включает в себя толкования на Евангелие святителя Иоанна Златоустого, блаженного Феофилакта Болгарского, святителя Феофана Затворника и других святых отцов, а также подробные исторические комментарии о быте, зако';
+//$meta_keyword='Евангелие, Иоанн Златоуст, Толкования';
+// // Добавляем картинки
+//$images = array(
+//    'catalog/images/evangelskie-besedy-na-kazhdyj-den-goda-po-cerkovnym-zachalam-1.jpg',
+//    'catalog/images/evangelskie-besedy-na-kazhdyj-den-goda-po-cerkovnym-zachalam-2.jpg',
+//    'catalog/images/evangelskie-besedy-na-kazhdyj-den-goda-po-cerkovnym-zachalam-3.jpg',
+//    'catalog/images/evangelskie-besedy-na-kazhdyj-den-goda-po-cerkovnym-zachalam-4.jpg'
+//);
+// Добавляем атрибуты
+// $attributes = "Артикул:13497|Код товара:94017|Дата поступления:29.09.2017|Издательство: Правило веры, Москва|Год издания:2017|Тираж:2000|Страниц:960|Бумага:офсетная|Вес:680|Тираж:2000|ISBN:978-5-94759-224-5|Гриф ИС:Р17-720-3449|Формат:70x100/32|Размер: 12,5 см. X 17 см. X 4,4 см.";
+// Отключаемся от базы
+var_dump($product);
+mysqli_close($db);
+
 ?>
