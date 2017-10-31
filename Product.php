@@ -1,43 +1,51 @@
 <?php
+require_once 'MyException.php';
 
 /**
  * Класс ТОВАР
  * @author Konstantin Semenov (vavulis)
  */
-class Product {
+class Product
+{
 
+    // БД
+    var $db; // Дескриптор подключения к БД
+    var $dbHost = '127.0.0.1';
+    var $dbLogin = 'semenoh3_tst';
+    var $dbPassword = '123456';
+    var $dbName = 'semenoh3_tst';
     // Поля таблицы oc_product
-    var $product_id; // ''
+    var $product_id = ''; // ''
     var $model; // '7938'
-    var $sku; // ''
-    var $upc; // ''
-    var $ean; // ''
-    var $jan; // ''
-    var $isbn; // '978-5-94759-201-6'
-    var $mpn; // ''
-    var $location; // ''
+    var $sku = ''; // ''
+    var $upc = ''; // ''
+    var $ean = ''; // ''
+    var $jan = ''; // ''
+    var $isbn = ''; // '978-5-94759-201-6'
+    var $mpn = ''; // ''
+    var $location = ''; // ''
     var $quantity; // 6
-    var $stock_status_id; // 7
+    var $stock_status_id = 7; // 7
     var $image; // 'catalog/images/evangelskie-besedy-na-kazhdyj-den-goda-po-cerkovnym-zachalam-main.jpg'
-    var $manufacturer_id; // 26
-    var $shipping; // 1
+    var $manufacturer_id = 26; // 26
+    var $shipping = 1; // 1
     var $price; // '419.0000'
-    var $points; // 0
-    var $tax_class_id; // 0
-    var $date_available; // ''
-    var $weight; // '550.00'
-    var $weight_class_id; // 2
-    var $length; // '12.50'
-    var $width; // '17.00'
-    var $height; // '4.00'
-    var $length_class_id; // 1
-    var $subtract; // 1
-    var $minimum; // 1
-    var $sort_order; // 1
-    var $status; // 1
-    var $viewed; // 0
+    var $points = 0; // 0
+    var $tax_class_id = 0; // 0
+    var $date_available = ''; // ''
+    var $weight = '550.00'; // '550.00'
+    var $weight_class_id = 2; // 2
+    var $length = '12.50'; // '12.50'
+    var $width = '17.00'; // '17.00'
+    var $height = '4.00'; // '4.00'
+    var $length_class_id = 1; // 1
+    var $subtract = 1; // 1
+    var $minimum = 1; // 1
+    var $sort_order = 1; // 1
+    var $status = 1; // 1
+    var $viewed = 0; // 0
     var $date_added; // now()
-    var $date_modified; // '0000-00-00 00:00:00'
+    var $date_modified = '0000-00-00 00:00:00'; // '0000-00-00 00:00:00'
     // Описание товара
 //    $this->descriptions[$language_id] = array(
 //            "name" => $name,
@@ -49,6 +57,8 @@ class Product {
 //            "meta_keyword" => $meta_keyword
 //        );
     var $descriptions = [];
+    // Язык
+    var $language_id = 1; // 1 - Русский
     // Картинки товара.
     var $images = [];
     // Основная иерархия категорий товара, хлебные крошки
@@ -66,106 +76,220 @@ class Product {
     // Файл логов ошибок
     var $error_file = 'logs/errors.log';
 
+    function prepareDB()
+    {
+        // Подключается к БД
+        $this->db = mysqli_connect($this->dbHost, $this->dbLogin, $this->dbPassword);
+        if (!$this->db) {
+            throw new MyException('Mysql error. Cannot connect to DB!');
+        }
+        mysqli_query("SET NAMES utf8");
+    }
+
     // Конструктор класса
-    function __construct() {
+    function __construct()
+    {
+        // Подключаемся к базе
+        $this->prepareDB();
+        
         // Задаем основные параметры товара
-        $this->getParamsFromPost();
+        $this->prepareParams();
     }
 
     // $attributes = "Артикул:13497|Код товара:94017|Дата поступления:29.09.2017|Издательство: Правило веры, Москва"
-    function addAttributesToProduct($attributes) {
-        $attributes = explode("|", $attributes);
-        foreach ($attributes as $attribute) {
+    function addAttributesToProduct($attributes)
+    {
+        $tt = explode("|", $attributes);
+        foreach ($tt as $attribute) {
             $t = explode(":", $attribute);
             // если есть пара ключ:значение, то добавляем в атрибуты
-            if (count($t) == 2)
+            if (count($t) == 2) {
                 $this->attributes[trim($t[0])] = trim($t[1]);
+            }
         }
     }
 
-    function addProductToDB() {
+    function addProductToDB()
+    {
+        echo "addProductToDB()";
         // надо сохранить product_id
-//        INSERT INTO `oc_product` (`product_id`, `model`, `sku`, `upc`, `ean`, `jan`, `isbn`, `mpn`, `location`, `quantity`, `stock_status_id`, `image`, `manufacturer_id`, `shipping`, `price`, `points`, `tax_class_id`, `date_available`, `weight`, `weight_class_id`, `length`, `width`, `height`, `length_class_id`, `subtract`, `minimum`, `sort_order`, `status`, `viewed`, `date_added`, `date_modified`) VALUES
-//('', '7938', '', '', '', '', '978-5-94759-201-6', '', '', 6, 7, 'catalog/images/evangelskie-besedy-na-kazhdyj-den-goda-po-cerkovnym-zachalam-main.jpg', 26, 1, '419.0000', 0, 0, '', '550.00', 2, '12.50', '17.00', '4.00', 1, 1, 1, 1, 1, 0, now(), '0000-00-00 00:00:00');
+
+        $query = "INSERT INTO oc_product (product_id, model, sku, upc, ean, jan, isbn, mpn, location, quantity, stock_status_id, image, manufacturer_id, shipping, price, points, tax_class_id, date_available, weight, weight_class_id, length, width, height, length_class_id, subtract, minimum, sort_order, status, viewed, date_added, date_modified) VALUES ('$this->product_id', '$this->model', '$this->sku', '$this->upc','$this->ean','$this->jan','$this->isbn','$this->mpn','$this->location','$this->quantity','$this->stock_status_id','$this->image','$this->manufacturer_id','$this->shipping','$this->price','$this->points','$this->tax_class_id','$this->date_available','$this->weight','$this->weight_class_id','$this->length','$this->width','$this->height','$this->length_class_id','$this->subtract','$this->minimum','$this->sort_order','$this->status','$this->viewed',now(),'$this->date_modified')";
+        mysqli_query($query) or die('Не удалось создать товар в запросе Mysql::' . print_r(error_get_last()));
+
+        return $this;
     }
 
-    function addDescriptionToDB() {
+    function addDescriptionToDB()
+    {
         echo "addDescriptionToDB();<br>";
+        return $this;
     }
 
-    function addImagesToDB() {
+    function addImagesToDB()
+    {
         echo "addImagesToDB();<br>";
+        return $this;
     }
 
-    function addLayoutToDB() {
+    function addLayoutToDB()
+    {
         echo "addLayoutToDB();<br>";
+        return $this;
     }
 
-    function addMagazineToDB() {
+    function addMagazineToDB()
+    {
         echo "addMagazineToDB();<br>";
+        return $this;
     }
 
     // создаем категории, добавляем описания, регистрируем категории в магазине, если надо добавляем алиасы к категориям в сео-про (можно и руками, категорий не много)
-    function addCategoryToDB() {
+    function addCategoryToDB()
+    {
         echo "addCategoryToDB();<br>";
+        return $this;
     }
 
     // назначаем товару категории
-    function setCategoriesToDB() {
+    function setCategoriesToDB()
+    {
         echo "setCategoriesToDB();<br>";
+        return $this;
     }
 
-    function addAttributesGroupToDB() {
+    function addAttributesGroupToDB()
+    {
         echo "addAttributesGroupToDB();<br>";
+        return $this;
     }
 
-    function addAttributesToDB() {
+    function addAttributesToDB()
+    {
         echo "addAttributesToDB();<br>";
+        return $this;
     }
 
-    function setAttributesToDB() {
+    function setAttributesToDB()
+    {
         echo "setAttributesToDB();<br>";
+        return $this;
     }
 
     // задать алиас для продукта в seopro
-    function setProductAliasToDB() {
+    function setProductAliasToDB()
+    {
         echo "setProductAliasToDB();<br>";
+        return $this;
     }
 
     // Заполняем свойства класса из массива $_POST
-    function getParamsFromPost() {
-        $this->model = mysql_real_escape_string($_POST[model]);
-        $this->sku = mysql_real_escape_string($_POST[sku]);
-        $this->upc = mysql_real_escape_string($_POST[upc]);
-        $this->ean = mysql_real_escape_string($_POST[ean]);
-        $this->jan = mysql_real_escape_string($_POST[jan]);
-        $this->isbn = mysql_real_escape_string($_POST[isbn]);
-        $this->mpn = mysql_real_escape_string($_POST[mpn]);
-        $this->location = mysql_real_escape_string($_POST[location]);
-        $this->quantity = mysql_real_escape_string($_POST[quantity]);
-        $this->stock_status_id = mysql_real_escape_string($_POST[stock_status_id]);
-        $this->image = mysql_real_escape_string($_POST[image]);
-        $this->manufacturer_id = mysql_real_escape_string($_POST[manufacturer_id]);
-        $this->shipping = mysql_real_escape_string($_POST[shipping]);
-        $this->price = mysql_real_escape_string($_POST[price]);
-        $this->points = mysql_real_escape_string($_POST[points]);
-        $this->tax_class_id = mysql_real_escape_string($_POST[tax_class_id]);
-        $this->date_available = mysql_real_escape_string($_POST[date_available]);
-        $this->weight = mysql_real_escape_string($_POST[weight]);
-        $this->weight_class_id = mysql_real_escape_string($_POST[weight_class_id]);
-        $this->width = mysql_real_escape_string($_POST[width]);
-        $this->height = mysql_real_escape_string($_POST[height]);
-        $this->length_class_id = mysql_real_escape_string($_POST[length_class_id]);
-        $this->subtract = mysql_real_escape_string($_POST[subtract]);
-        $this->minimum = mysql_real_escape_string($_POST[minimum]);
-        $this->sort_order = mysql_real_escape_string($_POST[sort_order]);
-        $this->status = mysql_real_escape_string($_POST[status]);
-        $this->viewed = mysql_real_escape_string($_POST[viewed]);
-        $this->date_added = mysql_real_escape_string($_POST[date_added]);
-        $this->date_modified = mysql_real_escape_string($_POST[date_modified]);
+    function prepareParams()
+    {
+        // Общие параметры товара        
+        if (isset($_POST[model])) {
+            $this->model = $_POST[model];
+        }
+        if (isset($_POST[sku])) {
+            $this->sku = $_POST[sku];
+        }
+        if (isset($_POST[upc])) {
+            $this->upc = $_POST[upc];
+        }
+        if (isset($_POST[ean])) {
+            $this->ean = $_POST[ean];
+        }
+        if (isset($_POST[jan])) {
+            $this->jan = $_POST[jan];
+        }
+        if (isset($_POST[isbn])) {
+            $this->isbn = $_POST[isbn];
+        }
+        if (isset($_POST[mpn])) {
+            $this->mpn = $_POST[mpn];
+        }
+        if (isset($_POST[location])) {
+            $this->location = $_POST[location];
+        }
+        if (isset($_POST[quantity])) {
+            $this->quantity = $_POST[quantity];
+        }
+        if (isset($_POST[stock_status_id])) {
+            $this->stock_status_id = $_POST[stock_status_id];
+        }
+        if (isset($_POST[image])) {
+            $this->image = $_POST[image];
+        }
+        if (isset($_POST[manufacturer_id])) {
+            $this->manufacturer_id = $_POST[manufacturer_id];
+        }
+        if (isset($_POST[shipping])) {
+            $this->shipping = $_POST[shipping];
+        }
+        if (isset($_POST[price])) {
+            $this->price = $_POST[price];
+        }
+        if (isset($_POST[points])) {
+            $this->points = $_POST[points];
+        }
+        if (isset($_POST[tax_class_id])) {
+            $this->tax_class_id = $_POST[tax_class_id];
+        }
+        if (isset($_POST[date_available])) {
+            $this->date_available = $_POST[date_available];
+        }
+        if (isset($_POST[weight])) {
+            $this->weight = $_POST[weight];
+        }
+        if (isset($_POST[weight_class_id])) {
+            $this->weight_class_id = $_POST[weight_class_id];
+        }
+
+        if (isset($_POST[width])) {
+            $this->width = $_POST[width];
+        }
+        if (isset($_POST[height])) {
+            $this->height = $_POST[height];
+        }
+        if (isset($_POST[length_class_id])) {
+            $this->length_class_id = $_POST[length_class_id];
+        }
+        if (isset($_POST[subtract])) {
+            $this->subtract = $_POST[subtract];
+        }
+        if (isset($_POST[minimum])) {
+            $this->minimum = $_POST[minimum];
+        }
+        if (isset($_POST[sort_order])) {
+            $this->sort_order = $_POST[sort_order];
+        }
+        if (isset($_POST[status])) {
+            $this->status = $_POST[status];
+        }
+        if (isset($_POST[viewed])) {
+            $this->viewed = $_POST[viewed];
+        }
+        if (isset($_POST[date_added])) {
+            $this->date_added = $_POST[date_added];
+        }
+        if (isset($_POST[date_modified])) {
+            $this->date_modified = $_POST[date_modified];
+        }
+        // Описание товара
+        $this->descriptions[$this->language_id] = array(
+            "name" => $_POST[name],
+            "description" => $_POST[description],
+            "tag" => '',
+            "meta_title" => '',
+            "meta_h1" => '',
+            "meta_description" => '',
+            "meta_keyword" => ''
+        );
+        return $this;
     }
 
-    function log($text) {
+    function log($text)
+    {
         // пишем лог в файл $this->log_file
         $fp = fopen($this->log_file, "a"); // Открываем файл в режиме записи
         $test = fwrite($fp, date("Y-m-d H:i:s") . " # " . $_SERVER['REMOTE_ADDR'] . " # $text\r\n");
@@ -176,7 +300,8 @@ class Product {
         fclose($fp); //Закрытие файла
     }
 
-    function errorLog($text) {
+    function errorLog($text)
+    {
         // пишем лог в файл $this->errors_log
         $fp = fopen($this->error_file, "a"); // Открываем файл в режиме записи
         $test = fwrite($fp, date("Y-m-d H:i:s") . " # " . $_SERVER['REMOTE_ADDR'] . " # $text\r\n");
@@ -187,23 +312,28 @@ class Product {
         fclose($fp); //Закрытие файла
     }
 
-    function checkParams() {
+    function checkParams()
+    {
         echo "checkParams();<br>";
+        // Имя
+        if ($this->descriptions[$this->language_id]['name'] == '') {
+            throw new MyException("Не указано имя. name=$this->name<br>");
+        }
+        // Модель
+        if ($this->model == '') {
+            throw new MyException("Не указана модель. model=$this->model");
+        }
+        return $this;
     }
 
-    function mainPotok() {
+    function mainPotok()
+    {
         echo "mainPotok();<br>";
-        $this->checkParams();
-        $this->addProductToDB();
-        $this->addDescriptionToDB();
-        $this->addLayoutToDB();
-        $this->addCategoryToDB();
-        $this->setCategoriesToDB();
-        $this->addAttributesGroupToDB();
-        $this->addAttributesToDB();
-        $this->setAttributesToDB();
+        $this->checkParams()->addProductToDB()->addDescriptionToDB()->addLayoutToDB()->addCategoryToDB()->setCategoriesToDB()->addAttributesGroupToDB()->addAttributesToDB()->setAttributesToDB();
     }
 
+    public function __invoke()
+    {
+        $this->mainPotok();
+    }
 }
-
-?>

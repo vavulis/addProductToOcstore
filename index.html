@@ -6,73 +6,72 @@ and open the template in the editor.
 -->
 <html>
     <head>
-        <title>TODO supply a title</title>
+        <title>Добавление товара в opencart</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <!-- Latest compiled and minified CSS -->
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+
+        <!-- jQuery library -->
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+        <!-- Latest compiled JavaScript -->
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script> 
     </head>
     <body>
-        <!--    var $product_id; // ''
-                var $model; // '7938'
-                var $sku; // ''
-                var $upc; // ''
-                var $ean; // ''
-                var $jan; // ''
-                var $isbn; // '978-5-94759-201-6'
-                var $mpn; // ''
-                var $location; // ''
-                var $quantity; // 6
-                var $stock_status_id; // 7
-                var $image; // 'catalog/images/evangelskie-besedy-na-kazhdyj-den-goda-po-cerkovnym-zachalam-main.jpg'
-                var $manufacturer_id; // 26
-                var $shipping; // 1
-                var $price; // '419.0000'
-                var $points; // 0
-                var $tax_class_id; // 0
-                var $date_available; // ''
-                var $weight; // '550.00'
-                var $weight_class_id; // 2
-                var $length; // '12.50'
-                var $width; // '17.00'
-                var $height; // '4.00'
-                var $length_class_id; // 1
-                var $subtract; // 1
-                var $minimum; // 1
-                var $sort_order; // 1
-                var $status; // 1
-                var $viewed; // 0
-                var $date_added; // now()
-                var $date_modified; // '0000-00-00 00:00:00'-->
-        <form action="server.php" method="post">
-            <input name="product_id" type="text" value="" id="product_id"> <label for="product_id">product_id</label><br>
-            <input name="model" type="text" value="7938" id="model"> <label for="model">model</label><br>
-            <input name="sku" type="text" value="" id="sku"> <label for="sku">sku</label><br>
-            <input name="upc" type="text" value="" id="upc"> <label for="upc">upc</label><br>
-            <input name="ean" type="text" value="" id="ean"> <label for="ean">ean</label><br>
-            <input name="jan" type="text" value="" id="jan"> <label for="jan">jan</label><br>
-            <input name="isbn" type="text" value="978-5-94759-201-6" id="isbn"> <label for="isbn">isbn</label><br>
-            <input name="mpn" type="text" value="" id="mpn"> <label for="mpn">mpn</label><br>
-            <input name="location" type="text" value="" id="location"> <label for="location">location</label><br>
-            <input name="quantity" type="text" value="6" id="quantity"> <label for="quantity">quantity</label><br>
-            <input name="stock_status_id" type="text" value="7" id="stock_status_id"> <label for="stock_status_id">stock_status_id</label><br>
-            <input name="image" type="text" value="catalog/images/evangelskie-besedy-na-kazhdyj-den-goda-po-cerkovnym-zachalam-main.jpg" id="image"><label for="image">image</label><br>
-            <input name="price" type="text" value="419.0000" id="price"> <label for="price">price</label><br>
-            <input name="points" type="text" value="0" id="points"> <label for="points">points</label><br>
-            <input name="tax_class_id" type="text" value="0" id="tax_class_id"> <label for="tax_class_id">tax_class_id</label><br>
-            <input name="date_available" type="text" value="" id="date_available"> <label for="date_available">date_available</label><br>
-            <input name="weight" type="text" value="550.00" id="weight"> <label for="weight">weight</label><br>
-            <input name="weight_class_id" type="text" value="2" id="weight_class_id"> <label for="weight_class_id">weight_class_id</label><br>
-            <input name="length" type="text" value="12.50" id="length"> <label for="length">length</label><br>
-            <input name="width" type="text" value="17.00" id="width"> <label for="width">width</label><br>
-            <input name="height" type="text" value="4.00" id="height"> <label for="height">height</label><br>
-            <input name="length_class_id" type="text" value="1" id="length_class_id"> <label for="length_class_id">length_class_id</label><br>
-            <input name="subtract" type="text" value="1" id="subtract"> <label for="subtract">subtract</label><br>
-            <input name="minimum" type="text" value="1" id="minimum"> <label for="minimum">minimum</label><br>
-            <input name="sort_order" type="text" value="1" id="sort_order"> <label for="sort_order">sort_order</label><br>
-            <input name="status" type="text" value="1" id="status"> <label for="status">status</label><br>
-            <input name="viewed" type="text" value="0" id="viewed"> <label for="viewed">viewed</label><br>
-            <input name="date_added" type="text" value="" id="date_added"> <label for="date_added">date_added</label><br>
-            <input name="date_modified" type="text" value="0000-00-00 00:00:00" id="date_modified"> <label for="date_modified">date_modified</label><br>
-            <input type="submit" value="Передать параметры">
-        </form>
+        <div class="container">
+            <h2>Добавление товара</h2>
+            <form id="cartForm" action="server.php" method="post">
+                <div class="form-group">
+                    <label for="name">name</label>
+                    <input name="name" type="text" value="Кросовки Adidas" id="name" class="form-control" placeholder="Название товара">
+                </div>
+                <div class="form-group">
+                    <label for="price">price</label>
+                    <input name="price" type="text" value="419.0000" id="price" class="form-control" placeholder="Цена товара">
+                </div>
+                <div class="form-group">
+                    <label for="model">model</label>
+                    <input name="model" type="text" value="123456" id="model" class="form-control" placeholder="Модель товара">
+                </div>
+                <div class="form-group">
+                    <label for="categories">categories</label>
+                    <input name="categories" type="text" value="Главная|Обувь|Кросовки" id="categories" class="form-control" placeholder="Категория товара">
+                </div>
+                <div class="form-group">
+                    <label for="image">image</label>
+                    <input name="image" type="text" value="catalog/images/evangelskie-besedy-na-kazhdyj-den-goda-po-cerkovnym-zachalam-main.jpg" id="image" class="form-control" placeholder="Картинка товара">
+                </div>
+                <div class="form-group">
+                    <label for="images">images</label>
+                    <input name="images" type="text" value="img1.jpg|img2.jpg|img3.jpg|img4.jpg" id="images" class="form-control" placeholder="Дополнительные картинки">
+                </div>
+                <div class="form-group">
+                    <label for="attributes">attributes</label>
+                    <input name="attributes" type="text" value="цвет:красный|пол:унисекс|размер:45" id="attributes" class="form-control" placeholder="Атрибуты товара">
+                </div>
+                <div class="form-group">
+                    <label for="description">description</label>
+                    <textarea name="description" class="form-control" rows="5" id="description" placeholder="Описание товара"><p>четкие колеса</p></textarea>
+                </div>                
+                <button type="submit" class="btn btn-default">Создать товар</button>
+            </form>
+        </div>
+
+<!--        <script>
+            $(document).ready(function () {
+                $("#cartForm").on("submit", function (event) {
+                    event.preventDefault();
+                    console.log($(this).serialize());
+                    $.post(
+                        "server.php",
+                        $('#cartForm').serialize(),
+                        function() {
+                            alert('AjaxOK');
+                        }
+                    );
+                });
+            });
+        </script>-->
     </body>
 </html>
