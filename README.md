@@ -31,5 +31,20 @@ II. КАК ПОЛЬЗОВАТЬСЯ
         10. Усложняем, пишем код ф-ций.
 
 
+III. ОСОБЕННОСТИ РЕАЛИЗАЦИИ
+
+    Чтобы не создавать на каждой итерациии добавления товара в БД надо не уничтожать mysql-соединение с базой.
+    Для этого есть способ mysql pdo persist http://php.net/manual/ru/pdo.connections.php 
+        <?php
+        $dbh = new PDO('mysql:host=localhost;dbname=test', $user, $pass, array(
+            PDO::ATTR_PERSISTENT => true
+        ));
+        ?>
+
+    Обертка блоков кода с работой с БД в блок try {} catch(PDOException $e) чтобы не показывать деталей на экран и писать ошибки в файл логов.
+    В будущем, чтобы не расставлять блоки try catch - реализовать то же самое с помощью exception event?
+
+
+
 
 

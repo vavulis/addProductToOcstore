@@ -9,7 +9,7 @@ class Product
 {
 
     // БД
-    var $db; // Дескриптор подключения к БД
+    var $dbh; // Дескриптор подключения к БД
     var $dbHost = '127.0.0.1';
     var $dbLogin = 'semenoh3_tst';
     var $dbPassword = '123456';
@@ -79,19 +79,35 @@ class Product
     function prepareDB()
     {
         // Подключается к БД
-        $this->db = mysqli_connect($this->dbHost, $this->dbLogin, $this->dbPassword);
-        if (!$this->db) {
-            throw new MyException('Mysql error. Cannot connect to DB!');
+        try {
+            $this->dbh = new PDO("mysql:host=$this->dbHost;dbname=$this->dbName;charser=utf8", $this->dbLogin, $this->dbPassword, array(
+                PDO::ATTR_PERSISTENT => true, // храним соединение, чтобы не пересоздавать его для каждого товара
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+            ));
+        } catch (PDOException $e) {            
+            $this->log('Подключение к базе данных не удалось: ' . $e->getMessage());
+            die('Подключение к базе данных не удалось: ');
         }
-        mysqli_query("SET NAMES utf8");
     }
 
     // Конструктор класса
-    function __construct()
+    function __construct($dbHost, $dbLogin, $dbPassword, $dbName)
     {
         // Подключаемся к базе
         $this->prepareDB();
-        
+
+        // тестируем, что база работает
+        // http://phpfaq.ru/pdo
+        // https://www.w3schools.com/php/php_mysql_prepared_statements.asp
+        echo "Начало теста<br>";
+        $stmt = $this->dbh->query('SELECT * FROM oc_product');
+        foreach ($stmt as $row) {
+            echo $row['model'] . "\n<br>";
+        }
+        echo "Конец теста<br>";
+        exit;
+
         // Задаем основные параметры товара
         $this->prepareParams();
     }
