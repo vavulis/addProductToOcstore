@@ -64,6 +64,21 @@ class Product
     // Префикс путей картинок
     var $images_prefix = "catalog/images/";
     // Основная иерархия категорий товара, хлебные крошки
+//    $_POST['categories'] = 'cat1|cat2|cat3';
+//    $this->categories = array (
+//        'cat1' => array(
+//            'id' => 0,
+//            'parent_id' => 0
+//        ),
+//        'cat2' => array(
+//            'id' => 0,
+//            'parent_id' => 0
+//        ),
+//        'cat3' => array(
+//            'id' => 0,
+//            'parent_id' => 0
+//        )
+//    ); 
     var $categories = [];
     // alias для категории для seopro
     var $category_alias_seopro = '';
@@ -266,15 +281,16 @@ class Product
 
         try {
             foreach ($this->categories as $catName => $v) {
-                // смотрим в базе есть ли такая категория
+                // проверяем есть ли такая же цепочка категорий в базе
                 $sql = "SELECT category_id FROM oc_category_description WHERE name LIKE ?";
                 $stmt = $this->dbh->prepare($sql);
-                $stmt->execute(array($v));
+                $stmt->execute(array($catName));
                 $catId = $stmt->fetchColumn();
                 if ($catId) {
                     echo "<h3> CatId='$catId' </h3>";
                 } else {
                     echo "<h3> Надо создать категорию '$catName' </h3>";
+                    $this->categories[$catName] = $catId;
                 }
             }
             exit;
