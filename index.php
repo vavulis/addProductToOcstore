@@ -1,18 +1,33 @@
 <?php
-
 header('Content-Type: text/html; charset=utf-8');
 
-require 'Category.php';
+require 'Categories.php';
+
+// Книги-Зарубежные-Научные
+// Книги-Зарубежные-Художественные
+// Книги-Русские-Научные
+// Книги-Русские-Художественные
 
 $arr = [
-    new Category('Книги', 1, 0),
-    new Category('Зарубежные', 2, 1),
-    new Category('Русские', 3, 1),
-    new Category('Научные', 4, 2),
-    new Category('Научные', 5, 3),
-    new Category('Художественные', 6, 2),
-    new Category('Художественные', 7, 3)
+    new Category('Книги', 10, 0),
+    new Category('Зарубежные', 20, 10),
+    new Category('Русские', 30, 10),
+    new Category('Научные', 40, 20),
+    new Category('Научные', 50, 30),
+    new Category('Художественные', 60, 20),
+    new Category('Художественные', 70, 30)
 ];
 
-var_dump($arr);
+$categories = new Categories($arr);
+
+$categories->generateAllCategoryLists();
+
+$t = ['Книги', 'Русские', 'Духовные', 'Святоотеческие'];
+$t2 = ['Книги', 'Русские'];
+
+$otvet = $categories->createOrUpdateCategory($t);
+
+echo "id=$otvet[id]";
+$categories->printArray($otvet[categories], 'Категории, которые надо добавить');
+
 
