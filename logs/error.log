@@ -1,1 +1,2 @@
 2017-11-04 18:23:57 # 31.148.63.227 # Ошибка добавления LAYOUT. SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry '1-0' for key 'PRIMARY'
+2017-11-11 14:05:29 # Ошибка в параметрах! Категории товара не задана!

@@ -1,10 +1,4 @@
 <?php
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 /**
  * Description of Categories
  *
@@ -25,11 +19,10 @@ class Categories
         foreach ($category_array as $t) {
             $this->categories[$t->id] = $t;
         }
-
         return $this;
     }
 
-    function generateCategoryList($last_id, $tt)
+    private function generateCategoryList($last_id, $tt)
     {
         if (isset($this->categories[$last_id])) {
             if ($this->categories[$last_id]->parent_id == 0) {
@@ -44,7 +37,7 @@ class Categories
         }
     }
 
-    function generateAllCategoryList($last_id, $tt, $t)
+    private function generateAllCategoryList($last_id, $tt, $t)
     {
         if (isset($this->categories[$last_id])) {
             if ($this->categories[$last_id]->parent_id == 0) {
@@ -59,7 +52,7 @@ class Categories
         }
     }
 
-    function generateCategoryLists()
+    private function generateCategoryLists()
     {
         // 1. найдем крайние элементы цепочки
         // на крайнее элементы не ссылаются другие елементы
@@ -74,23 +67,18 @@ class Categories
         sort($parents_cat, SORT_NUMERIC);
         sort($ids_cat, SORT_NUMERIC);
         $last_ids = array_diff($ids_cat, $parents_cat);
-
         // 2. построем цепочки от крайних элементов
         foreach ($last_ids as $last_id) {
             $this->generateCategoryList($last_id, []);
         }
-
-//        var_dump($this->category_lists);
-
         return $this;
     }
 
-    function generateAllCategoryLists()
+    private function generateAllCategoryLists()
     {
         foreach ($this->categories as $c) {
             $this->generateAllCategoryList($c->id, [], $c->id);
         }
-
         // убедимся, что мы сгенерировали массив массивов строк
         if (is_array($this->categories) && count($this->categories) > 0) {
             if (is_array($this->category_all_lists)) {
@@ -111,66 +99,55 @@ class Categories
                 throw new MyException('Ошибка в логике! Категории товара надо передавать как массив строк!');
             }
         }
-
         return $this;
     }
 
     // $bread_crumps = ['Книги', 'Русские', 'Научные']
-    function createOrUpdateCategory($bread_crumps)
+    // return = ['id' => 30, 'categories' => ['Духовные', 'Жития святых']]
+    // or return = NULL если категорию создавать не надо
+    public function createOrUpdateCategory($bread_crumps)
     {
         if (is_array($bread_crumps)) {
-            foreach ($bread_crumps as $t) {
+            foreach ($bread_crumps as $key => $t) {
                 if (!is_string($t)) {
                     throw new MyException('Ошибка в логике! Категории товара надо передавать как массив строк!');
+                } elseif ($t == '') {
+                    return NULL; // категорию добавлять не надо
+                } else {
+                    $bread_crumps[$key] = trim($t); // удаляем пробелы слева и справа
                 }
             }
         } else {
             throw new MyException('Ошибка в логике! Категории товара надо передавать как массив строк!');
         }
-
+        if (count($this->categories) == 0) {
+            return array('id' => 0, 'categories' => $bread_crumps);
+        }
         $this->generateAllCategoryLists();
-
-//        M = [a, ab, abc, ad];   x = ka
-//
-//        1).
-//        r = []
-//        x = ka
-//
-//        2).
-//        r = [a]
-//        x = k
-//
-//        3).
-//        r = [ka]
-//        x = ''
-//
-//        4). 
-//        STOP, потому, что x пустой
-//        addCategory(parent_id=0, список_категорий=[ka])
-
         $result = [];
         $x = $bread_crumps;
         $id = 0;
-
         while (count($x) > 0) {
             foreach ($this->category_all_lists as $key => $tt) {
                 if ($tt == $x) {
-                    return $otvet = array('id' => $key,'categories' => $result);
+                    if (count($result) == 0) {
+                        return NULL; // такая категория существует, категорию добавлять не надо
+                    } else {
+                        return array('id' => $key, 'categories' => $result);
+                    }
                 }
             }
             array_unshift($result, array_pop($x));
         }
-
         if (count($x) == 0) {
             return array('id' => $id, 'categories' => $result);
         } else {
             throw new MyException('Ошибка в логике!');
         }
-
         throw new MyException('Ошибка в логике!');
     }
 
-    function printArray($tt, $text = '')
+    public function printArray($tt, $text = '')
     {
         if (is_array($tt)) {
             echo "<br><hr><h3>$text</h3>";
@@ -193,4 +170,3 @@ class Categories
         }
     }
 }
-
