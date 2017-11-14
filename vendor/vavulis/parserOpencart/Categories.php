@@ -4,7 +4,7 @@
  *
  * @author Konstantin Semenov
  */
-namespace vavulis\parserOpencart\Categories;
+//namespace vavulis\parserOpencart\Categories;
 
 require_once __ROOT__ . '/vendor/vavulis/errors/MyException.php';
 require_once __ROOT__ . '/vendor/vavulis/parserOpencart/Category.php';
@@ -35,7 +35,7 @@ class Categories
                 $this->generateCategoryList($this->categories[$last_id]->parent_id, $tt);
             }
         } else {
-            throw new \vavulis\errors\MyException("Ошибка в логике. parent_id ссылается на несуществующий элемент. LAST_ID = $last_id, TT = $tt. ");
+            throw new MyException("Ошибка в логике. parent_id ссылается на несуществующий элемент. LAST_ID = $last_id, TT = $tt. ");
         }
     }
 
@@ -50,7 +50,7 @@ class Categories
                 $this->generateAllCategoryList($this->categories[$last_id]->parent_id, $tt, $t);
             }
         } else {
-            throw new \vavulis\errors\MyException("Ошибка в логике. parent_id ссылается на несуществующий элемент. LAST_ID = $last_id, TT = $tt. ");
+            throw new MyException("Ошибка в логике. parent_id ссылается на несуществующий элемент. LAST_ID = $last_id, TT = $tt. ");
         }
     }
 
@@ -90,15 +90,15 @@ class Categories
                             if (is_string($t)) {
                                 return $this;
                             } else {
-                                throw new \vavulis\errors\MyException('Ошибка в логике! Категории товара надо передавать как массив строк!');
+                                throw new MyException('Ошибка в логике! Категории товара надо передавать как массив строк!');
                             }
                         }
                     } else {
-                        throw new \vavulis\errors\MyException('Ошибка в логике! Категории товара надо передавать как массив строк!');
+                        throw new MyException('Ошибка в логике! Категории товара надо передавать как массив строк!');
                     }
                 }
             } else {
-                throw new \vavulis\errors\MyException('Ошибка в логике! Категории товара надо передавать как массив строк!');
+                throw new MyException('Ошибка в логике! Категории товара надо передавать как массив строк!');
             }
         }
         return $this;
@@ -112,7 +112,7 @@ class Categories
         if (is_array($bread_crumps)) {
             foreach ($bread_crumps as $key => $t) {
                 if (!is_string($t)) {
-                    throw new \vavulis\errors\MyException('Ошибка в логике! Категории товара надо передавать как массив строк!');
+                    throw new MyException('Ошибка в логике! Категории товара надо передавать как массив строк!');
                 } elseif ($t == '') {
                     return NULL; // категорию добавлять не надо
                 } else {
@@ -120,7 +120,7 @@ class Categories
                 }
             }
         } else {
-            throw new \vavulis\errors\MyException('Ошибка в логике! Категории товара надо передавать как массив строк!');
+            throw new MyException('Ошибка в логике! Категории товара надо передавать как массив строк!');
         }
         if (count($this->categories) == 0) {
             return array('id' => 0, 'categories' => $bread_crumps);
@@ -144,9 +144,9 @@ class Categories
         if (count($x) == 0) {
             return array('id' => $id, 'categories' => $result);
         } else {
-            throw new \vavulis\errors\MyException('Ошибка в логике!');
+            throw new MyException('Ошибка в логике!');
         }
-        throw new \vavulis\errors\MyException('Ошибка в логике!');
+        throw new MyException('Ошибка в логике!');
     }
 
     public function printArray($tt, $text = '')

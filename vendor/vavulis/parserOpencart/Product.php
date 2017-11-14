@@ -1,7 +1,6 @@
 <?php
-namespace vavulis\parserOpencart;
-
-require_once '../errors/MyException.php';
+//namespace vavulis\parserOpencart;
+require_once __ROOT__ . '/vendor/vavulis/errors/MyException.php';
 
 /**
  * Класс ТОВАР
@@ -274,7 +273,6 @@ class Product
     function addCategoryToDB()
     {
         echo "addCategoryToDB();<br>";
-
 //        6. Добавляем категории, если они не существуют
 //        INSERT INTO `oc_category` (`category_id`, `image`, `parent_id`, `top`, `column`, `sort_order`, `status`, `date_added`, `date_modified`) VALUES
 //        (86, '', 0, 0, 1, 0, 1, '2017-10-23 16:18:37', '2017-10-23 16:18:37'),
@@ -498,11 +496,11 @@ class Product
         echo "checkParams();<br>";
         // Имя
         if ($this->descriptions[$this->language_id]['name'] == '') {
-            throw new \vavulis\errors\MyException("Не указано имя. name=$this->name<br>");
+            throw new MyException("Не указано имя. name=$this->name<br>");
         }
         // Модель
         if ($this->model == '') {
-            throw new \vavulis\errors\MyException("Не указана модель. model=$this->model");
+            throw new MyException("Не указана модель. model=$this->model");
         }
         return $this;
     }

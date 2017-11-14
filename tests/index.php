@@ -13,13 +13,13 @@ require_once __ROOT__ . '/vendor/vavulis/parserOpencart/Categories.php';
 // Книги-Русские-Художественные
 
 $arr = [
-    new \vavulis\parserOpencart\Category('Книги ', 10, 0),
-    new \vavulis\parserOpencart\Category(' Зарубежные', 20, 10),
-    new \vavulis\parserOpencart\Category('  Русские', 30, 10),
-    new \vavulis\parserOpencart\Category('Научные', 40, 20),
-    new \vavulis\parserOpencart\Category('Научные', 50, 30),
-    new \vavulis\parserOpencart\Category('Художественные', 60, 20),
-    new \vavulis\parserOpencart\Category('Художественные', 70, 30)
+    new Category('Книги ', 10, 0),
+    new Category(' Зарубежные', 20, 10),
+    new Category('  Русские', 30, 10),
+    new Category('Научные', 40, 20),
+    new Category('Научные', 50, 30),
+    new Category('Художественные', 60, 20),
+    new Category('Художественные', 70, 30)
 ];
 
 $arr2 = [];
@@ -34,7 +34,7 @@ $t6 = ['Книги', 'Зарубежные', 'Научные', 'Англоязы
 
 function test($oc_categories, $new_category, $correct_answer)
 {
-    $categories = new \vavulis\parserOpencart\Categories($oc_categories);
+    $categories = new Categories($oc_categories);
     $answer = $categories->createOrUpdateCategory($new_category);
     if ($answer == $correct_answer) {
         echo "<p style='color:green'>Тест прошел успешно</p>";
