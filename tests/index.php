@@ -3,8 +3,6 @@ error_reporting(E_ERROR | E_WARNING | E_PARSE | E_NOTICE);
 ini_set('display_errors', 1);
 header('Content-Type: text/html; charset=utf-8');
 
-define('__ROOT__', dirname(dirname(__FILE__)));
-
 require_once __ROOT__ . '/vendor/vavulis/parserOpencart/Categories.php';
 
 // Книги-Зарубежные-Научные

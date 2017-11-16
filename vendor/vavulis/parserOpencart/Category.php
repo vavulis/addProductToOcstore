@@ -10,8 +10,8 @@
 class Category
 {
 
-    var $id = 0;
     var $name = '';
+    var $id = 0;
     var $parent_id = 0;
 
     public function __construct($name, $id, $parent_id = 0)

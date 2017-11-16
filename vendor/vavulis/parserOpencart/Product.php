@@ -1,6 +1,8 @@
 <?php
 //namespace vavulis\parserOpencart;
 require_once __ROOT__ . '/vendor/vavulis/errors/MyException.php';
+require_once __ROOT__ . '/vendor/vavulis/logs/MyLog.php';
+require_once __ROOT__ . '/vendor/vavulis/parserOpencart/Categories.php';
 
 /**
  * Класс ТОВАР
@@ -11,10 +13,10 @@ class Product
 
     // БД
     var $dbh; // Дескриптор подключения к БД
-    var $dbHost = '127.0.0.1';
-    var $dbLogin = 'semenoh3_tst';
-    var $dbPassword = '123456';
-    var $dbName = 'semenoh3_tst';
+    var $dbHost = '';
+    var $dbLogin = '';
+    var $dbPassword = '';
+    var $dbName = '';
     // Поля таблицы oc_product
     var $product_id = ''; // ''
     var $model; // '7938'
@@ -64,22 +66,9 @@ class Product
     var $images = [];
     // Префикс путей картинок
     var $images_prefix = "catalog/images/";
-    // Основная иерархия категорий товара, хлебные крошки
-//    $_POST['categories'] = 'cat1|cat2|cat3';
-//    $this->categories = array (
-//        'cat1' => array(
-//            'id' => 0,
-//            'parent_id' => 0
-//        ),
-//        'cat2' => array(
-//            'id' => 0,
-//            'parent_id' => 0
-//        ),
-//        'cat3' => array(
-//            'id' => 0,
-//            'parent_id' => 0
-//        )
-//    ); 
+    // Все категории из БД
+    var $all_categories = [];
+    // $_POST['categories'] = 'cat1|cat2|cat3';
     var $categories = [];
     // alias для категории для seopro
     var $category_alias_seopro = '';
@@ -90,12 +79,13 @@ class Product
     // Группы атрибутов. [ 'group_id1' => 'group_name1', ... ]
     var $groups_of_attributes = [];
     // Файл логов
-    var $log_file = 'logs/messages.log';
+    var $log_file = __ROOT__ . '/logs/messages.log';
     // Файл логов ошибок
-    var $error_file = 'logs/error.log';
+    var $error_file = __ROOT__ . '/logs/error.log';
 
-    function prepareDB()
+    function prepareDB($dbHost, $dbLogin, $dbPassword, $dbName)
     {
+
         // Подключается к БД
         try {
             $this->dbh = new PDO("mysql:host=$this->dbHost;dbname=$this->dbName;charser=utf8", $this->dbLogin, $this->dbPassword, array(
@@ -105,14 +95,31 @@ class Product
                 PDO::ATTR_EMULATE_PREPARES => false
             ));
         } catch (PDOException $ex) {
-            $this->errorLog('Подключение к базе данных не удалось: ' . $ex->getMessage());
+            MyLog::log('Подключение к базе данных не удалось: ' . $ex->getMessage(), $this->error_file);
             die('Подключение к базе данных не удалось!');
         }
     }
 
     // Конструктор класса
-    function __construct()
+    function __construct($dbHost, $dbLogin, $dbPassword, $dbName)
     {
+        if (!isset($dbHost) || $dbHost == '') {
+            throw new MyException("Ошибка в параметрах подключения к БД! Не задан ХОСТ!");
+        }
+        if (!isset($dbLogin) || $dbLogin == '') {
+            throw new MyException("Ошибка в параметрах подключения к БД! Не задан ПОЛЬЗОВАТЕЛЬ!");
+        }
+        if (!isset($dbPassword) || $dbPassword == '') {
+            throw new MyException("Ошибка в параметрах подключения к БД! Не задан ПАРОЛЬ!");
+        }
+        if (!isset($dbName) || $dbName == '') {
+            throw new MyException("Ошибка в параметрах подключения к БД! Не задано ИМЯ ТАБЛИЦЫ!");
+        }
+        $this->dbHost = $dbHost;
+        $this->dbLogin = $dbLogin;
+        $this->dbPassword = $dbPassword;
+        $this->dbName = $dbName;
+
         // Подключаемся к базе
         $this->prepareDB();
 
@@ -177,9 +184,9 @@ class Product
         try {
             $stmt->execute($param);
             $this->product_id = $this->dbh->lastInsertId();
-            $this->log("Успешно добавлен ТОВАР №$this->product_id !");
+            MyLog::log("Успешно добавлен ТОВАР №$this->product_id !", $this->log_file);
         } catch (PDOException $ex) {
-            $this->errorLog("Не удалось создать товар. " . $ex->getMessage() . "\t" . $sql . "\t" . $param);
+            MyLog::log("Не удалось создать товар. " . $ex->getMessage() . "\t" . $sql . "\t" . $param, $this->error_file);
         }
 
         return $this;
@@ -206,9 +213,9 @@ class Product
 
         try {
             $stmt->execute($param);
-            $this->log("Успешно добавлено ОПИСАНИЕ товара №$this->product_id !");
+            MyLog::log("Успешно добавлено ОПИСАНИЕ товара №$this->product_id !", $this->log_file);
         } catch (PDOException $ex) {
-            $this->errorLog("Не удалось создать описание товара №$this->product_id! " . $ex->getMessage() . "\t" . $sql . "\t" . $param);
+            MyLog::log("Не удалось создать описание товара №$this->product_id! " . $ex->getMessage() . "\t" . $sql . "\t" . $param, $this->error_file);
         }
 
         return $this;
@@ -229,9 +236,9 @@ class Product
                 $image = $this->images_prefix . $t;
                 $stmt->execute();
             }
-            $this->log("Успешно добавлены КАРТИНКИ товара №$this->product_id !");
+            MyLog::log("Успешно добавлены КАРТИНКИ товара №$this->product_id !", $this->log_file);
         } catch (PDOException $ex) {
-            $this->errorLog("Не удалось создать картинки товара №$this->product_id! " . $ex->getMessage());
+            MyLog::log("Не удалось создать картинки товара №$this->product_id! " . $ex->getMessage(), $this->error_file);
         }
 
         return $this;
@@ -242,12 +249,12 @@ class Product
         echo "addLayoutToDB();<br>";
 
         try {
-            $sql = "INSERT INTO `oc_product_to_layout` (`product_id`, `store_id`, `layout_id`) VALUES (?, 0, 0);";
+            $sql = "INSERT INTO oc_product_to_layout (product_id, store_id, layout_id) VALUES (?, 0, 0);";
             $stmt = $this->dbh->prepare($sql);
             $stmt->execute(array($this->product_id));
-            $this->log("Успешно добавили LAYOUT к товару №$this->product_id");
+            MyLog::log("Успешно добавили LAYOUT к товару №$this->product_id", $this->log_file);
         } catch (Exception $ex) {
-            $this->errorLog("Ошибка добавления LAYOUT. " . $ex->getMessage());
+            MyLog::log("Ошибка добавления LAYOUT. " . $ex->getMessage(), $this->error_file);
         }
 
         return $this;
@@ -258,21 +265,54 @@ class Product
         echo "addMagazineToDB();<br>";
 
         try {
-            $sql = "INSERT INTO `oc_product_to_store` (`product_id`, `store_id`) VALUES (:product_id, 0);";
+            $sql = "INSERT INTO oc_product_to_store (product_id, store_id) VALUES (:product_id, 0);";
             $stmt = $this->dbh->prepare($sql);
             $stmt->execute(array($this->product_id));
-            $this->log("Успешно назначили MAGAZINE к товару №$this->product_id");
+            MyLog::log("Успешно назначили MAGAZINE к товару №$this->product_id", $this->log_file);
         } catch (Exception $ex) {
-            $this->errorLog("Ошибка добавления MAGAZINE. " . $ex->getMessage());
+            MyLog::log("Ошибка добавления MAGAZINE. " . $ex->getMessage(), $this->error_file);
         }
 
         return $this;
     }
 
-    // создаем категории, добавляем описания, регистрируем категории в магазине, если надо добавляем алиасы к категориям в сео-про (можно и руками, категорий не много)
-    function addCategoryToDB()
+    function addCategoryToDB($name, $parent_id)
     {
-        echo "addCategoryToDB();<br>";
+        try {
+            $this->dbh->beginTransaction();
+
+            $sql = "INSERT INTO `oc_category` (`image`, `parent_id`, `top`, `column`, `sort_order`, `status`, `date_added`, `date_modified`)";
+            $sql .= " VALUES ('', :parent_id, 1, 0, 1, 0, now(), now())";
+            $stmt = $this->dbh->prepare($sql);
+            $stmt->bindParam(':parent_id', $parent_id, PDO::PARAM_INT);
+            $stmt->execute();
+            $last_id1 = $this->dbh->lastInsertId();
+            echo "Last id1= $last_id1 <br>";
+
+            $sql2 = "INSERT INTO `oc_category_description` (`language_id`, `name`, `description`, `meta_title`, `meta_h1`, `meta_description`, `meta_keyword`)";
+            $sql2 .= " VALUES (1, :name, '', '', '', '', '')";
+            $stmt2 = $this->dbh->prepare($sql2);
+            $stmt2->bindParam(':name', $name, PDO::PARAM_STR);
+            $stmt2->execute();
+            $last_id2 = $this->dbh->lastInsertId();
+            echo "Last id2 = $last_id2";
+
+            $this->dbh->commit();
+
+            MyLog::log("Успешно создана категория '$name' с id='$last_id'", $this->log_file);
+            return $last_id;
+        } catch (PDOException $e) {
+            MyLog::log("Ошибка в заполнении категории товара ID = $this->product_id! Имя категории = $name, id = $id, parent_id = $parent_id... " . $e->getMessage(), $this->error_file);
+            $this->dbh->rollback();
+        }
+    }
+
+    // Добавляет цепочку категорий в базу и делает родителем цепочки категорию с интексом $id
+    // $id = 3; $categories = ['cat1', 'cat2', 'cat3']
+    function addCategoriesToId($id, $categories)
+    {
+
+        // получаем все категории из базы
 //        6. Добавляем категории, если они не существуют
 //        INSERT INTO `oc_category` (`category_id`, `image`, `parent_id`, `top`, `column`, `sort_order`, `status`, `date_added`, `date_modified`) VALUES
 //        (86, '', 0, 0, 1, 0, 1, '2017-10-23 16:18:37', '2017-10-23 16:18:37'),
@@ -304,9 +344,23 @@ class Product
                 $image = $this->images_prefix . $t;
                 $stmt->execute();
             }
-            $this->log("Успешно добавлены КАРТИНКИ товара №$this->product_id !");
+            MyLog::log("Успешно добавлены КАРТИНКИ товара №$this->product_id !", $this->log_file);
         } catch (PDOException $ex) {
-            $this->errorLog("Не удалось создать картинки товара №$this->product_id! " . $ex->getMessage());
+            MyLog::log("Не удалось создать картинки товара №$this->product_id! " . $ex->getMessage(), $this->error_file);
+        }
+
+        return $this;
+    }
+
+    // создаем категории, добавляем описания, регистрируем категории в магазине, если надо добавляем алиасы к категориям в сео-про (можно и руками, категорий не много)
+    function addCategoriesToDB()
+    {
+        echo "addCategoryToDB();<br>";
+
+        if (count($this->categories) > 0) {
+            $this->getAllCategoryFromDB();
+            $answer = $this->all_categories->createOrUpdateCategory($this->categories);
+            $this->addCategoriesToId($answer['id'], $answer['categories']);
         }
 
         return $this;
@@ -451,44 +505,22 @@ class Product
             try {
                 $this->images = explode('|', $_POST[images]);
             } catch (Exception $ex) {
-                $this->errorLog("В товаре №$this->product_id КАРТИНКИ заданы с ошибками! POST_[images]=$_POST[images]");
+                MyLog::log("В товаре №$this->product_id КАРТИНКИ заданы с ошибками! POST_[images]=$_POST[images]", $this->error_file);
             }
         }
         // Категории
         if (isset($_POST[categories])) {
-            // $_POST[categories] = 'cat1|cat2|cat3'
-            // $this->categories = array (
-            // 'cat1' => 0, // здесь будет id категории
-            // 'cat2' => 0, // здесь будет id категории
-            // 'cat3' => 0 // здесь будет id категории
-            // );
             try {
                 $tt = explode('|', $_POST[categories]);
                 foreach ($tt as $t) {
-                    $this->categories[$t] = 0;
+                    $this->categories[] = $t;
                 }
             } catch (Exception $ex) {
-                $this->errorLog("В товаре №$this->product_id КАТЕГОРИИ заданы с ошибками! POST_[categories]=$_POST[categories]");
+                MyLog::log("В товаре №$this->product_id КАТЕГОРИИ заданы с ошибками! POST_[categories]=$_POST[categories]", $this->error_file);
             }
         }
 
         return $this;
-    }
-
-    function log($text)
-    {
-        // пишем лог в файл $this->log_file
-        $fp = fopen($this->log_file, "a"); // Открываем файл в режиме записи
-        fwrite($fp, date("Y-m-d H:i:s") . " # " . $_SERVER['REMOTE_ADDR'] . " # $text\r\n");
-        fclose($fp); //Закрытие файла
-    }
-
-    function errorLog($text)
-    {
-        // пишем лог в файл $this->errors_log
-        $fp = fopen($this->error_file, "a"); // Открываем файл в режиме записи
-        fwrite($fp, date("Y-m-d H:i:s") . " # " . $_SERVER['REMOTE_ADDR'] . " # $text\r\n");
-        fclose($fp); //Закрытие файла
     }
 
     function checkParams()
@@ -505,11 +537,40 @@ class Product
         return $this;
     }
 
+    function getAllCategoryFromDB()
+    {
+        try {
+            $sql = "SELECT oc_category_description.name as name, oc_category.category_id as id, oc_category.parent_id as parent_id";
+            $sql .= " FROM oc_category, oc_category_description";
+            $sql .= " WHERE oc_category.category_id = oc_category_description.category_id";
+            $stmt = $this->dbh->prepare($sql);
+            $stmt->execute();
+            $result = $stmt->fetchAll();
+            if (count($result) == 0) {
+                MyLog::log("В базе категорий пока нет!", $this->log_file);
+            } elseif (count($result) > 0) {
+                MyLog::log("Успешно получили из базы все категории", $this->log_file);
+                $tt = [];
+                foreach ($result as $t) {
+                    $tt[] = new Category($t['name'], $t['id'], $t['parent_id']);
+                }
+                $this->all_categories = new Categories($tt);
+            } else {
+                throw new MyException("Ошибка в логике при запросе категорий из базы! ");
+            }
+        } catch (Exception $ex) {
+            MyLog::log("Ошибка! Не удалось получить из базы все категории", $this->error_file);
+        }
+
+        return $this;
+    }
+
     function mainPotok()
     {
         echo "mainPotok();<br>";
         //$this->checkParams()->addProductToDB()->addDescriptionToDB()->addImagesToDB()->addLayoutToDB()->addMagazineToDB()->addCategoryToDB()->setCategoriesToDB()->addAttributesGroupToDB()->addAttributesToDB()->setAttributesToDB();
-        $this->checkParams()->addCategoryToDB();
+        // $this->checkParams()->addCategoriesToDB();
+        $this->checkParams()->addCategoryToDB("Вася из Урюпинска", 100, 81);
     }
 
     public function __invoke()

@@ -12,7 +12,7 @@ require_once __ROOT__ . '/vendor/vavulis/parserOpencart/Category.php';
 class Categories
 {
 
-    var $categories = [];
+    var $categories = []; // Массив объектов Category
     var $category_lists = [];
     var $category_all_lists = [];
 

@@ -16,7 +16,7 @@ class MyException extends Exception
         $fp = fopen($this->log_file, "a"); // Открываем файл в режиме записи
         $test = fwrite($fp, date("Y-m-d H:i:s") . " # $text\r\n");
         if (!$test) {
-            die("Не могу открыть файл логов для записи!");
+            die("Ошибка! Не могу создать файл логов!");
         }
         fclose($fp); //Закрытие файла
     }
