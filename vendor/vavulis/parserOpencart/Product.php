@@ -282,12 +282,12 @@ class Product
     {
         try {
             $this->dbh->beginTransaction();
-
             $sql = "INSERT INTO `oc_category` (`category_id`, `image`, `parent_id`, `top`, `column`, `sort_order`, `status`, `date_added`, `date_modified`)";
             $sql .= " VALUES ('', '', :parent_id, 0, 1, 0, 1, now(), now())";
             $stmt = $this->dbh->prepare($sql);
             $stmt->bindParam(':parent_id', $parent_id, PDO::PARAM_INT);
             $stmt->execute();
+
             $last_id = $this->dbh->lastInsertId();
 
             $sql2 = "INSERT INTO `oc_category_description` (`category_id`, `language_id`, `name`, `description`, `meta_title`, `meta_h1`, `meta_description`, `meta_keyword`)";
@@ -297,8 +297,21 @@ class Product
             $stmt2->bindParam(':name', $name, PDO::PARAM_STR);
             $stmt2->execute();
 
-            $this->dbh->commit();
+            $sql3 = "INSERT INTO `oc_category_to_store` (`category_id`, `store_id`) VALUES (:category_id, 0)";
+            $stmt3 = $this->dbh->prepare($sql3);
+            $stmt3->bindParam(':category_id', $last_id, PDO::PARAM_INT);
+            $stmt3->execute();
 
+            $sql4 = "INSERT INTO `oc_category_to_layout` (`category_id`, `store_id`, `layout_id`) VALUES (:category_id, 0, 0)";
+            $stmt4 = $this->dbh->prepare($sql4);
+            $stmt4->bindParam(':category_id', $last_id, PDO::PARAM_INT);
+            $stmt4->execute();
+
+            $sql5 = "INSERT INTO `oc_category_path` (`category_id`, `path_id`, `level`) VALUES (?, ?, 0)";
+            $stmt5 = $this->dbh->prepare($sql5);
+            $stmt5->execute(array($last_id, $last_id));
+
+            $this->dbh->commit();
             MyLog::log("Успешно создана категория '$name' с id='$last_id'", $this->log_file);
             return $last_id;
         } catch (PDOException $e) {
@@ -345,12 +358,14 @@ class Product
     {
         echo "setCategoriesToDB();<br>";
 
-        // если нет товара выкинуть Exception!
-        
+        if ($this->product_id == '') {
+            throw new MyException("Ошибка! Невозможно назначить категорию, так как не задан product_id. product_id = '$this->product_id'! ", $this->error_file);
+        }
+
         if (count($this->newCategories) > 0) {
             $last = array_pop($this->newCategories);
             try {
-                $sql = "INSERT INTO `oc_product_to_category` (`product_id`, `category_id`) VALUES (:product_id, :last_id)";
+                $sql = "INSERT INTO `oc_product_to_category` (`product_id`, `category_id`, `main_category`) VALUES (:product_id, :last_id, 1)";
                 $stmt = $this->dbh->prepare($sql);
                 $stmt->bindParam(':product_id', $this->product_id, PDO::PARAM_INT);
                 $stmt->bindParam(':last_id', intval($last->id), PDO::PARAM_INT);
@@ -561,9 +576,7 @@ class Product
     function mainPotok()
     {
         echo "mainPotok();<br>";
-        //$this->checkParams()->addProductToDB()->addDescriptionToDB()->addImagesToDB()->addLayoutToDB()->addMagazineToDB()->addCategoryToDB()->setCategoriesToDB()->addAttributesGroupToDB()->addAttributesToDB()->setAttributesToDB();
-        // $this->checkParams()->addCategoriesToDB();
-        $this->checkParams()->addCategoriesToDB()->setCategoriesToDB();
+        $this->checkParams()->addProductToDB()->addDescriptionToDB()->addImagesToDB()->addLayoutToDB()->addMagazineToDB()->addCategoriesToDB()->setCategoriesToDB()->addAttributesGroupToDB()->addAttributesToDB()->setAttributesToDB();
     }
 
     public function __invoke()
