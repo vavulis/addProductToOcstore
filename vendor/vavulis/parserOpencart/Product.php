@@ -82,8 +82,8 @@ class Product
     var $log_file = __ROOT__ . '/logs/messages.log';
     // Файл логов ошибок
     var $error_file = __ROOT__ . '/logs/error.log';
-    // Новосозданные категории
-    var $newCategories = [];
+    // Новосозданные категории Categories
+    var $newCategories = NULL;
 
     function prepareDB($dbHost, $dbLogin, $dbPassword, $dbName)
     {
@@ -346,8 +346,12 @@ class Product
 
         if (count($this->categories) > 0) {
             $this->getAllCategoryFromDB();
-            $answer = $this->all_categories->createOrUpdateCategory($this->categories);
-            $this->addCategoriesToId($answer['id'], $answer['categories']);
+            if (count($this->all_categories) > 0) {
+                $answer = $this->all_categories->createOrUpdateCategory($this->categories);
+                $this->addCategoriesToId($answer['id'], $answer['categories']);
+            } elseif (count($this->all_categories) == 0) {
+                MyLog::log("Надо создать категории с нуля", $this->log_file);
+            }
         }
 
         return $this;
@@ -556,6 +560,7 @@ class Product
             $result = $stmt->fetchAll();
             if (count($result) == 0) {
                 MyLog::log("В базе категорий пока нет!", $this->log_file);
+                $this->all_categories = new Categories([]);
             } elseif (count($result) > 0) {
                 MyLog::log("Успешно получили из базы все категории", $this->log_file);
                 $tt = [];
