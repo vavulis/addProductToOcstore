@@ -67,7 +67,7 @@ class Product
     // Префикс путей картинок
     var $images_prefix = "catalog/images/";
     // Все категории из БД
-    var $all_categories = [];
+    var $all_categories = NULL; // type = Categories
     // $_POST['categories'] = 'cat1|cat2|cat3';
     var $categories = [];
     // alias для категории для seopro
@@ -83,7 +83,7 @@ class Product
     // Файл логов ошибок
     var $error_file = __ROOT__ . '/logs/error.log';
     // Новосозданные категории Categories
-    var $newCategories = NULL;
+    var $newCategories = []; // type = arra of Category
 
     function prepareDB($dbHost, $dbLogin, $dbPassword, $dbName)
     {
@@ -307,10 +307,6 @@ class Product
             $stmt4->bindParam(':category_id', $last_id, PDO::PARAM_INT);
             $stmt4->execute();
 
-            $sql5 = "INSERT INTO `oc_category_path` (`category_id`, `path_id`, `level`) VALUES (?, ?, 0)";
-            $stmt5 = $this->dbh->prepare($sql5);
-            $stmt5->execute(array($last_id, $last_id));
-
             $this->dbh->commit();
             MyLog::log("Успешно создана категория '$name' с id='$last_id'", $this->log_file);
             return $last_id;
@@ -355,6 +351,50 @@ class Product
         }
 
         return $this;
+    }
+
+    // Добавляет нужную инфу в таблицу oc_category_path
+    // без этого не будет работать цепочка категорий в админке если не нажать кнопку ПОЧИНИТЬ
+    private function addCategoryPath()
+    {
+        //        $sql5 = "INSERT INTO `oc_category_path` (`category_id`, `path_id`, `level`) VALUES (?, ?, 0)";
+//        $stmt5 = $this->dbh->prepare($sql5);
+//        $stmt5->execute(array($last_id, $last_id));
+        if (count($this->newCategories) > 0) {
+            $cats = [];
+            foreach ($this->newCategories as $cat) {
+                $cats[] = $cat->id;
+            }
+            var_dump($cats);
+        }
+
+        return $this;
+    }
+
+    // вспомогательная ф-ция для ф-ции addCategoryPath()
+    // param $cats = array of category.id; $cats = [56, 57, 58]
+    // return = массив строк, который надо добавить в таблицу oc_category_path
+    // return = [ [56 56 0], [57 57 1], [57 56 0] ]
+    private function generateCategoryPath($cats)
+    {
+//        abc
+//        012
+//
+//        a0
+//        b1
+//        c2
+//
+//        aa0
+//        ba0
+//        ca0
+//
+//        -ab1
+//        bb1
+//        cb1
+//
+//        -ac2
+//        -bc2
+//        cc2
     }
 
     // назначаем товару категории
@@ -581,7 +621,9 @@ class Product
     function mainPotok()
     {
         echo "mainPotok();<br>";
-        $this->checkParams()->addProductToDB()->addDescriptionToDB()->addImagesToDB()->addLayoutToDB()->addMagazineToDB()->addCategoriesToDB()->setCategoriesToDB()->addAttributesGroupToDB()->addAttributesToDB()->setAttributesToDB();
+//        $this->checkParams()->addProductToDB()->addDescriptionToDB()->addImagesToDB()->addLayoutToDB()->addMagazineToDB()->addCategoriesToDB()->setCategoriesToDB()->addAttributesGroupToDB()->addAttributesToDB()->setAttributesToDB();
+//        $this->addCategoryPath();
+        print_r($this->generateCategoryPath([50, 51, 52]));
     }
 
     public function __invoke()
