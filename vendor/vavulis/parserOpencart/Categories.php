@@ -149,6 +149,29 @@ class Categories
         throw new MyException('Ошибка в логике!');
     }
 
+    private function addArray($a, $b)
+    {
+        foreach ($b as $t) {
+            $a[] = $t;
+        }
+        return $a;
+    }
+
+    // $id = 3 - id категории
+    // return = [0, 1, 2] - массив из id категорий предков
+    public function getParentsChain($id)
+    {
+        if (isset($this->categories[$id])) {
+            if ($this->categories[$id]->parent_id == 0) {
+                return [$id];
+            } else {
+                return $this->addArray([$id], $this->getParentsChain($this->categories[$id]->parent_id));
+            }
+        } else {
+            throw new MyException("Ошибка в логике. parent_id ссылается на несуществующий элемент. LAST_ID = $id");
+        }
+    }
+
     public function printArray($tt, $text = '')
     {
         if (is_array($tt)) {

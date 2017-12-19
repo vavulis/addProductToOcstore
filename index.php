@@ -1,0 +1,78 @@
+<?php ?>
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html>
+    <head>
+        <title>Добавление товара в opencart</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <!-- Latest compiled and minified CSS -->
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+
+        <!-- jQuery library -->
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+        <!-- Latest compiled JavaScript -->
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script> 
+    </head>
+    <body>
+        <div class="container">
+            <h2>Добавление товара</h2>
+            <form id="cartForm" action="server.php" method="post">
+                <div class="form-group">
+                    <label for="name">name</label>
+                    <input name="name" type="text" value="Кросовки Adidas" id="name" class="form-control" placeholder="Название товара">
+                </div>
+                <div class="form-group">
+                    <label for="price">price</label>
+                    <input name="price" type="text" value="419.0000" id="price" class="form-control" placeholder="Цена товара">
+                </div>
+                <div class="form-group">
+                    <label for="model">model</label>
+                    <input name="model" type="text" value="123456" id="model" class="form-control" placeholder="Модель товара">
+                </div>
+                <div class="form-group">
+                    <label for="categories">categories</label>
+                    <input name="categories" type="text" value="Главная|Обувь|Кросовки" id="categories" class="form-control" placeholder="Категория товара">
+                </div>
+                <div class="form-group">
+                    <label for="image">image</label>
+                    <input name="image" type="text" value="catalog/images/evangelskie-besedy-na-kazhdyj-den-goda-po-cerkovnym-zachalam-main.jpg" id="image" class="form-control" placeholder="Картинка товара">
+                </div>
+                <div class="form-group">
+                    <label for="images">images</label>
+                    <input name="images" type="text" value="img1.jpg|img2.jpg|img3.jpg|img4.jpg" id="images" class="form-control" placeholder="Дополнительные картинки">
+                </div>
+                <div class="form-group">
+                    <label for="attributes">attributes</label>
+                    <input name="attributes" type="text" value="цвет:красный|пол:унисекс|размер:45" id="attributes" class="form-control" placeholder="Атрибуты товара">
+                </div>
+                <div class="form-group">
+                    <label for="description">description</label>
+                    <textarea name="description" class="form-control" rows="5" id="description" placeholder="Описание товара"><p>четкие колеса</p></textarea>
+                </div>                
+                <button type="submit" class="btn btn-default">Создать товар</button>
+            </form>
+        </div>
+
+        <!--        <script>
+                    $(document).ready(function () {
+                        $("#cartForm").on("submit", function (event) {
+                            event.preventDefault();
+                            console.log($(this).serialize());
+                            $.post(
+                                "server.php",
+                                $('#cartForm').serialize(),
+                                function() {
+                                    alert('AjaxOK');
+                                }
+                            );
+                        });
+                    });
+                </script>-->
+    </body>
+</html>

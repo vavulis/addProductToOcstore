@@ -357,15 +357,57 @@ class Product
     // без этого не будет работать цепочка категорий в админке если не нажать кнопку ПОЧИНИТЬ
     private function addCategoryPath()
     {
-        //        $sql5 = "INSERT INTO `oc_category_path` (`category_id`, `path_id`, `level`) VALUES (?, ?, 0)";
-//        $stmt5 = $this->dbh->prepare($sql5);
-//        $stmt5->execute(array($last_id, $last_id));
         if (count($this->newCategories) > 0) {
-            $cats = [];
-            foreach ($this->newCategories as $cat) {
-                $cats[] = $cat->id;
+            $result = [];
+            $newcats = [];
+            $first_id = $this->newCategories[0]->parent_id;
+            if (($first_id < 0) || !isset($first_id)) {
+                throw new MyException('Ошибка в логике');
             }
-            var_dump($cats);
+            foreach ($this->newCategories as $cat) {
+                $newcats[] = $cat->id;
+            }
+            if ($first_id > 0) {
+                $head = $this->all_categories->getParentsChain($first_id);
+                for ($i = count($head) - 1; $i >= 0; $i--) {
+                    $result[] = $head[$i];
+                }
+                for ($i = 0; $i < count($newcats); $i++) {
+                    $result[] = $newcats[$i];
+                }
+            } elseif ($first_id == 0) {
+                $result = $newcats;
+            } else {
+                throw new MyException('Ошибка в логике');
+            }
+            $path_array = $this->generateCategoryPath($result);
+            try {
+                $sql = "INSERT INTO `oc_category_path` (`category_id`, `path_id`, `level`) VALUES (?, ?, ?)";
+                $stmt = $this->dbh->prepare($sql);
+                $category_path_from_db = $this->getCategoryPathFromDb();
+                foreach ($path_array as $path) {
+                    foreach ($category_path_from_db as $path_db) {
+                        if (($path_db['category_id'] == $path[0]) && ($path_db['path_id'] == $path[1])) {
+                            echo "<br>НЕ НАДО ВСТАВЛЯТЬ path<br>";
+                            echo $path_db['category_id'] . '=' . $path[0];
+                            echo "<br>";
+                            echo $path_db['path_id'] . '=' . $path[1];
+                            echo "<br>";
+                        } else {
+                            $stmt->execute($path);
+                            echo "<br>НАДО ВСТАВИТЬ path<br>";
+                            echo $path_db['category_id'] . '=' . $path[0];
+                            echo "<br>";
+                            echo $path_db['path_id'] . '=' . $path[1];
+                            echo "<br>";
+                        }
+                    }
+                }
+            } catch (PDOException $ex) {
+                throw new MyException($path_db['category_id'] . '::' . $path_db['path_id']);
+            }
+        } else {
+            
         }
 
         return $this;
@@ -377,24 +419,36 @@ class Product
     // return = [ [56 56 0], [57 57 1], [57 56 0] ]
     private function generateCategoryPath($cats)
     {
-//        abc
-//        012
-//
-//        a0
-//        b1
-//        c2
-//
-//        aa0
-//        ba0
-//        ca0
-//
-//        -ab1
-//        bb1
-//        cb1
-//
-//        -ac2
-//        -bc2
-//        cc2
+        $result = [];
+        for ($i = 0; $i < count($cats); $i++) {
+            for ($j = 0; $j < count($cats); $j++) {
+                if ($i >= $j) {
+                    $result[] = [$cats[$i], $cats[$j], $j];
+                }
+            }
+        }
+        return $result;
+    }
+
+    private function getCategoryPathFromDb()
+    {
+        try {
+            $sql = "SELECT * FROM `oc_category_path`";
+            $stmt = $this->dbh->prepare($sql);
+            $stmt->execute();
+            $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            if (count($result) == 0) {
+                MyLog::log("В базе oc_category_path пусто!", $this->log_file);
+                return [];
+            } elseif (count($result) > 0) {
+                MyLog::log('Успешно получили из базы записи из таблицы oc_category_path! ' . serialize($result), $this->log_file);
+                return $result;
+            } else {
+                throw new MyException("Ошибка в логике в getCategoryPathFromDb()! ");
+            }
+        } catch (PDOException $ex) {
+            throw new MyException("Ошибка в MYSQL в getCategoryPathFromDb()!");
+        }
     }
 
     // назначаем товару категории
@@ -407,16 +461,21 @@ class Product
         }
 
         if (count($this->newCategories) > 0) {
-            $last = array_pop($this->newCategories);
             try {
-                $sql = "INSERT INTO `oc_product_to_category` (`product_id`, `category_id`, `main_category`) VALUES (:product_id, :last_id, 1)";
-                $stmt = $this->dbh->prepare($sql);
-                $stmt->bindParam(':product_id', $this->product_id, PDO::PARAM_INT);
-                $stmt->bindParam(':last_id', intval($last->id), PDO::PARAM_INT);
-                $stmt->execute();
-                MyLog::log("Успешно назначена категория №$last->id товару №$this->product_id!", $this->log_file);
+                for ($i = count($this->newCategories) - 1; $i >= 0; $i--) {
+                    if ($i == count($this->newCategories) - 1) {
+                        $sql = "INSERT INTO `oc_product_to_category` (`product_id`, `category_id`, `main_category`) VALUES (:product_id, :last_id, 1)";
+                    } else {
+                        $sql = "INSERT INTO `oc_product_to_category` (`product_id`, `category_id`, `main_category`) VALUES (:product_id, :last_id, 0)";
+                    }
+                    $stmt = $this->dbh->prepare($sql);
+                    $stmt->bindParam(':product_id', $this->product_id, PDO::PARAM_INT);
+                    $stmt->bindParam(':last_id', intval($this->newCategories[$i]->id), PDO::PARAM_INT);
+                    $stmt->execute();
+                    MyLog::log("Успешно назначена категория №$this->newCategories[$i]->id товару №$this->product_id!", $this->log_file);
+                }
             } catch (PDOException $ex) {
-                throw new MyException("Ошибка при назначении категория №$last->id товару №$this->product_id! $ex->getMessage()");
+                throw new MyException("Ошибка при назначении категория №$this->newCategories[$i]->id товару №$this->product_id! $ex->getMessage()");
             }
         } else {
             MyLog::log("Нет категорий, которые надо добавить к товару", $this->log_file);
@@ -611,8 +670,8 @@ class Product
             } else {
                 throw new MyException("Ошибка в логике при запросе категорий из базы! ");
             }
-        } catch (Exception $ex) {
-            MyLog::log("Ошибка! Не удалось получить из базы все категории", $this->error_file);
+        } catch (PDOException $ex) {
+            throw new MyException("Ошибка при попытке получить все категории из базы в getAllCategoryFromDB()!");
         }
 
         return $this;
@@ -621,13 +680,13 @@ class Product
     function mainPotok()
     {
         echo "mainPotok();<br>";
-//        $this->checkParams()->addProductToDB()->addDescriptionToDB()->addImagesToDB()->addLayoutToDB()->addMagazineToDB()->addCategoriesToDB()->setCategoriesToDB()->addAttributesGroupToDB()->addAttributesToDB()->setAttributesToDB();
-//        $this->addCategoryPath();
-        print_r($this->generateCategoryPath([50, 51, 52]));
+        $this->checkParams()->addProductToDB()->addDescriptionToDB()->addImagesToDB()->addLayoutToDB()->addMagazineToDB()->addCategoriesToDB()->setCategoriesToDB()->addCategoryPath()->addAttributesGroupToDB()->addAttributesToDB()->setAttributesToDB();
     }
 
     public function __invoke()
     {
         $this->mainPotok();
+        echo "<br>newCategories[]:<br>";
+        var_dump($this->newCategories);
     }
 }
