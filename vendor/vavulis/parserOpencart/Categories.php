@@ -6,22 +6,51 @@
  */
 //namespace vavulis\parserOpencart\Categories;
 
+define('__LOGFILE__', __ROOT__ . '/logs/messages.log');
+
 require_once __ROOT__ . '/vendor/vavulis/errors/MyException.php';
 require_once __ROOT__ . '/vendor/vavulis/parserOpencart/Category.php';
 
 class Categories
 {
 
-    var $categories = []; // Массив объектов Category
-    var $category_lists = [];
-    var $category_all_lists = [];
+    private $categories = []; // Массив объектов Category
+    private $category_lists = []; // Массив цепочек категорий от корня до конца
+    private $category_all_lists = []; // Массив предков для каждой категории
 
-    public function __construct($category_array)
+    public function __construct(array $category_array)
     {
-        foreach ($category_array as $t) {
-            $this->categories[$t->id] = $t;
+        try {
+            foreach ($category_array as $t) {
+                if (is_object($t) && (get_class($t) == 'Category')) {
+                    if (!isset($this->categories[$t->id])) {
+                        $this->categories[$t->id] = $t;
+                    } else {
+                        throw new MyException('Категория с таким id уже есть! Category:' . serialize($t));
+                    }
+                } else {
+                    throw new MyException('Категория задана неправильно! Category:' . serialize($t));
+                }
+                $this->categories[$t->id] = $t;
+            }
+            $this->generateAllCategoryLists();
+            $this->generateCategoryLists();
+        } catch (Exception $ex) {
+            throw new MyException('Ошибка в конструкторе Categories. Параментр category_array = ' . serialize($category_array) . 'Текст ошибки: ' . $ex->getMessage());
         }
         return $this;
+    }
+
+    public function addCategory(Category $category)
+    {
+        if (!isset($this->categories[$category->id])) {
+            $this->categories[$category->id] = $category;
+            $this->generateAllCategoryLists();
+            $this->generateCategoryLists();
+            return $this;
+        } else {
+            throw new MyException('Категория с таким id уже есть! Category:' . serialize($category));
+        }
     }
 
     private function generateCategoryList($last_id, $tt)
@@ -54,8 +83,15 @@ class Categories
         }
     }
 
-    private function generateCategoryLists()
+    public function getCategories()
     {
+        return $this->categories;
+    }
+
+    public function generateCategoryLists()
+    {
+        // сначала удалим старые значения
+        $this->category_lists = [];
         // 1. найдем крайние элементы цепочки
         // на крайнее элементы не ссылаются другие елементы
         $parents_cat = []; // категории, которые уже родили
@@ -76,8 +112,12 @@ class Categories
         return $this;
     }
 
-    private function generateAllCategoryLists()
+    // для каждой категории находит список предков. сохраняем все цепочки в массив $this->category_all_list
+    public function generateAllCategoryLists()
     {
+        // сначала удалим старые данные
+        $this->category_all_lists = [];
+        // а теперь наполняем новымы значениями свойство класса $this->category_all_lists
         foreach ($this->categories as $c) {
             $this->generateAllCategoryList($c->id, [], $c->id);
         }
@@ -119,13 +159,14 @@ class Categories
                     $bread_crumps[$key] = trim($t); // удаляем пробелы слева и справа
                 }
             }
+            unset($key);
+            unset($t);
         } else {
             throw new MyException('Ошибка в логике! Категории товара надо передавать как массив строк!');
         }
         if (count($this->categories) == 0) {
             return array('id' => 0, 'categories' => $bread_crumps);
         }
-        $this->generateAllCategoryLists();
         $result = [];
         $x = $bread_crumps;
         $id = 0;
@@ -172,26 +213,16 @@ class Categories
         }
     }
 
-    public function printArray($tt, $text = '')
+//    На входе: $names = ['cat1', 'cat2', 'cat3'] - цепочка категорий
+//    На выходе: $result = [0, 59, 60] - айдишники категорий
+    public function getIdsByNames(array $names)
     {
-        if (is_array($tt)) {
-            echo "<br><hr><h3>$text</h3>";
-            if (is_array($tt[array_rand($tt)])) {
-                foreach ($tt as $t) {
-                    $this->printArray($t);
-                }
-            } elseif (is_string($tt[array_rand($tt)])) {
-                echo "[ ";
-                for ($i = 0; $i < count($tt); $i++) {
-                    if ($i != 0) {
-                        echo " :: ";
-                    }
-                    echo $tt[$i];
-                }
-                echo " ]<hr><br>";
-            } elseif (count($tt) == 0) {
-                echo "[ ]<hr><br>";
+        foreach ($this->category_all_lists as $k => $v) {
+            if ($names == $v) {
+                $result = $this->getParentsChain($k);
+                return array_reverse($result);
             }
         }
+        return [];
     }
 }

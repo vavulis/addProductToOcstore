@@ -3,6 +3,7 @@
 require_once __ROOT__ . '/vendor/vavulis/errors/MyException.php';
 require_once __ROOT__ . '/vendor/vavulis/logs/MyLog.php';
 require_once __ROOT__ . '/vendor/vavulis/parserOpencart/Categories.php';
+require_once __ROOT__ . '/vendor/vavulis/parserOpencart/Attributes.php';
 
 /**
  * Класс ТОВАР
@@ -68,22 +69,27 @@ class Product
     var $images_prefix = "catalog/images/";
     // Все категории из БД
     var $all_categories = NULL; // type = Categories
-    // $_POST['categories'] = 'cat1|cat2|cat3';
-    var $categories = [];
+    // Массив категорий, переданных через $_POST
+    var $categories_from_post = [];
     // alias для категории для seopro
     var $category_alias_seopro = '';
     // alias для товара для seopro
     var $product_alias_seopro = '';
-    // Атрибуты товара и их значения. [ 'atr1' => 10, ... ]
+    // Группа атрибутов, имя атрибута, значение атрибута.
+    //    attritubes = array(
+    //        'group'=>'характеристики товара',
+    //        'name'=>'цвет',
+    //        'val'=>'красный'
+    //    )
     var $attributes = [];
-    // Группы атрибутов. [ 'group_id1' => 'group_name1', ... ]
-    var $groups_of_attributes = [];
     // Файл логов
     var $log_file = __ROOT__ . '/logs/messages.log';
     // Файл логов ошибок
     var $error_file = __ROOT__ . '/logs/error.log';
     // Новосозданные категории Categories
     var $newCategories = []; // type = arra of Category
+    // Назначенный товару категории
+    var $categories = []; // type = Categories
 
     function prepareDB($dbHost, $dbLogin, $dbPassword, $dbName)
     {
@@ -129,23 +135,8 @@ class Product
         $this->prepareParams();
     }
 
-    // $attributes = "Артикул:13497|Код товара:94017|Дата поступления:29.09.2017|Издательство: Правило веры, Москва"
-    function addAttributesToProduct($attributes)
-    {
-        $tt = explode("|", $attributes);
-        foreach ($tt as $attribute) {
-            $t = explode(":", $attribute);
-            // если есть пара ключ:значение, то добавляем в атрибуты
-            if (count($t) == 2) {
-                $this->attributes[trim($t[0])] = trim($t[1]);
-            }
-        }
-    }
-
     function addProductToDB()
     {
-        echo "addProductToDB()";
-
         $sql = "INSERT INTO oc_product (product_id, model, sku, upc, ean, jan, isbn, mpn, location, quantity, stock_status_id, image, manufacturer_id, shipping, price, points, tax_class_id, date_available, weight, weight_class_id, length, width, height, length_class_id, subtract, minimum, sort_order, status, viewed, date_added, date_modified)";
         $sql .= " VALUES (:product_id, :model, :sku, :upc, :ean, :jan, :isbn, :mpn, :location, :quantity, :stock_status_id, :image, :manufacturer_id, :shipping, :price, :points, :tax_class_id, :date_available, :weight, :weight_class_id, :length, :width, :height, :length_class_id, :subtract, :minimum, :sort_order, :status, :viewed, now(), :date_modified)";
 
@@ -196,8 +187,6 @@ class Product
 
     function addDescriptionToDB()
     {
-        echo "addDescriptionToDB();<br>";
-
         $sql = "INSERT INTO oc_product_description (product_id, language_id, name, description, tag, meta_title, meta_h1, meta_description, meta_keyword)";
         $sql .= " VALUES (:product_id, :language_id, :name, :description, :tag, :meta_title, :meta_h1, :meta_description, :meta_keyword)";
         $stmt = $this->dbh->prepare($sql);
@@ -225,8 +214,6 @@ class Product
 
     function addImagesToDB()
     {
-        echo "addImagesToDB();<br>";
-
         try {
             $sql = "INSERT INTO oc_product_image (product_image_id, product_id, image, sort_order)";
             $sql .= " VALUES ('', :product_id, :image, '')";
@@ -248,8 +235,6 @@ class Product
 
     function addLayoutToDB()
     {
-        echo "addLayoutToDB();<br>";
-
         try {
             $sql = "INSERT INTO oc_product_to_layout (product_id, store_id, layout_id) VALUES (?, 0, 0);";
             $stmt = $this->dbh->prepare($sql);
@@ -264,8 +249,6 @@ class Product
 
     function addMagazineToDB()
     {
-        echo "addMagazineToDB();<br>";
-
         try {
             $sql = "INSERT INTO oc_product_to_store (product_id, store_id) VALUES (:product_id, 0);";
             $stmt = $this->dbh->prepare($sql);
@@ -325,28 +308,37 @@ class Product
         } elseif (count($categories) > 0) {
             $cat = array_shift($categories);
             $t = $this->addCategoryToDB($cat, $id);
-            echo "($cat, $id, $t);<br>";
             $this->newCategories[] = new Category($cat, $t, $id);
             $this->addCategoriesToId($t, $categories);
         } else {
-            new MyException("Ошибка в логике при создании цепочки категорий.");
+            throw new MyException("Ошибка в логике при создании цепочки категорий.");
         }
 
         return -1;
     }
 
-    // создаем категории, добавляем описания, регистрируем категории в магазине, если надо добавляем алиасы к категориям в сео-про (можно и руками, категорий не много)
+    // создаем категории, добавляем описания, регистрируем категории в магазине, если надо добавляем алиасы к категориям в сео-про (можно и руками, категорий не много)    
     public function addCategoriesToDB()
     {
-        echo "addCategoriesToDB();<br>";
-
-        if (count($this->categories) > 0) {
+        if (count($this->categories_from_post) > 0) {
             $this->getAllCategoryFromDB();
-            if (count($this->all_categories) > 0) {
-                $answer = $this->all_categories->createOrUpdateCategory($this->categories);
+            $cnt = count($this->all_categories->getCategories());
+            if ($cnt > 0) {
+                $answer = $this->all_categories->createOrUpdateCategory($this->categories_from_post);
                 $this->addCategoriesToId($answer['id'], $answer['categories']);
-            } elseif (count($this->all_categories) == 0) {
+                // добавляем новосозданные категории в $this->new_categories
+                foreach ($this->newCategories as $ncat) {
+                    $this->all_categories->addCategory($ncat);
+                }
+            } elseif ($cnt == 0) {
                 MyLog::log("Надо создать категории с нуля", $this->log_file);
+                $this->addCategoriesToId(0, $this->categories_from_post);
+                // добавляем новосозданные категории в $this->new_categories
+                foreach ($this->newCategories as $ncat) {
+                    $this->all_categories->addCategory($ncat);
+                }
+            } else {
+                throw new MyException("Ошибка в логике в addCategoriesToDB()!");
             }
         }
 
@@ -362,7 +354,7 @@ class Product
             $newcats = [];
             $first_id = $this->newCategories[0]->parent_id;
             if (($first_id < 0) || !isset($first_id)) {
-                throw new MyException('Ошибка в логике');
+                throw new MyException('Ошибка в логике в addCategoryPath()!');
             }
             foreach ($this->newCategories as $cat) {
                 $newcats[] = $cat->id;
@@ -378,7 +370,7 @@ class Product
             } elseif ($first_id == 0) {
                 $result = $newcats;
             } else {
-                throw new MyException('Ошибка в логике');
+                throw new MyException('Ошибка в логике в addCategoryPath()!');
             }
             $path_array = $this->generateCategoryPath($result);
             try {
@@ -394,12 +386,12 @@ class Product
                             echo $path_db['path_id'] . '=' . $path[1];
                             echo "<br>";
                         } else {
-                            $stmt->execute($path);
                             echo "<br>НАДО ВСТАВИТЬ path<br>";
                             echo $path_db['category_id'] . '=' . $path[0];
                             echo "<br>";
                             echo $path_db['path_id'] . '=' . $path[1];
                             echo "<br>";
+                            $stmt->execute($path);
                         }
                     }
                 }
@@ -454,25 +446,47 @@ class Product
     // назначаем товару категории
     public function setCategoriesToDB()
     {
-        echo "setCategoriesToDB();<br>";
-
         if ($this->product_id == '') {
-            throw new MyException("Ошибка! Невозможно назначить категорию, так как не задан product_id. product_id = '$this->product_id'! ", $this->error_file);
+            throw new MyException("Ошибка! Невозможно назначить категорию, так как не задан product_id. product_id = '$this->product_id'! ");
         }
 
-        if (count($this->newCategories) > 0) {
+        if (count($this->categories_from_post) > 0) {
             try {
-                for ($i = count($this->newCategories) - 1; $i >= 0; $i--) {
-                    if ($i == count($this->newCategories) - 1) {
-                        $sql = "INSERT INTO `oc_product_to_category` (`product_id`, `category_id`, `main_category`) VALUES (:product_id, :last_id, 1)";
-                    } else {
-                        $sql = "INSERT INTO `oc_product_to_category` (`product_id`, `category_id`, `main_category`) VALUES (:product_id, :last_id, 0)";
+                $cnt = count($this->all_categories->getCategories());
+                if ($cnt > 0) {
+                    $ids = $this->all_categories->getIdsByNames($this->categories_from_post);
+                    // назначаем товару категории из $ids
+                    for ($i = count($ids) - 1; $i >= 0; $i--) {
+                        if ($i == count($ids) - 1) {
+                            $sql = "INSERT INTO `oc_product_to_category` (`product_id`, `category_id`, `main_category`) VALUES (:product_id, :last_id, 1)";
+                        } else {
+                            $sql = "INSERT INTO `oc_product_to_category` (`product_id`, `category_id`, `main_category`) VALUES (:product_id, :last_id, 0)";
+                        }
+                        $stmt = $this->dbh->prepare($sql);
+                        $stmt->bindParam(':product_id', $this->product_id, PDO::PARAM_INT);
+                        $stmt->bindParam(':last_id', intval($ids[$i]), PDO::PARAM_INT);
+                        $stmt->execute();
+                        MyLog::log("Успешно назначена категория №$ids[$i] товару №$this->product_id!", $this->log_file);
                     }
-                    $stmt = $this->dbh->prepare($sql);
-                    $stmt->bindParam(':product_id', $this->product_id, PDO::PARAM_INT);
-                    $stmt->bindParam(':last_id', intval($this->newCategories[$i]->id), PDO::PARAM_INT);
-                    $stmt->execute();
-                    MyLog::log("Успешно назначена категория №$this->newCategories[$i]->id товару №$this->product_id!", $this->log_file);
+                } elseif ($cnt == 0) {
+                    if (count($this->newCategories) > 0) {
+                        for ($i = count($this->newCategories) - 1; $i >= 0; $i--) {
+                            if ($i == count($this->newCategories) - 1) {
+                                $sql = "INSERT INTO `oc_product_to_category` (`product_id`, `category_id`, `main_category`) VALUES (:product_id, :last_id, 1)";
+                            } else {
+                                $sql = "INSERT INTO `oc_product_to_category` (`product_id`, `category_id`, `main_category`) VALUES (:product_id, :last_id, 0)";
+                            }
+                            $stmt = $this->dbh->prepare($sql);
+                            $stmt->bindParam(':product_id', $this->product_id, PDO::PARAM_INT);
+                            $stmt->bindParam(':last_id', intval($this->newCategories[$i]->id), PDO::PARAM_INT);
+                            $stmt->execute();
+                            MyLog::log("Успешно назначена категория №$this->newCategories[$i]->id товару №$this->product_id!", $this->log_file);
+                        }
+                    } else {
+                        throw new MyException('Ошибка в логике в setCategoriesToDB()!');
+                    }
+                } else {
+                    throw new MyException('Ошибка в логике в setCategoriesToDB()!');
                 }
             } catch (PDOException $ex) {
                 throw new MyException("Ошибка при назначении категория №$this->newCategories[$i]->id товару №$this->product_id! $ex->getMessage()");
@@ -484,21 +498,10 @@ class Product
         return $this;
     }
 
-    function addAttributesGroupToDB()
-    {
-        echo "addAttributesGroupToDB();<br>";
-        return $this;
-    }
-
-    function addAttributesToDB()
-    {
-        echo "addAttributesToDB();<br>";
-        return $this;
-    }
-
     function setAttributesToDB()
     {
-        echo "setAttributesToDB();<br>";
+        $attributes = new Attributes($this->dbh, $this->product_id);
+        $attributes->setAttributesToProduct($this->dbh, $this->product_id, $this->attributes);
         return $this;
     }
 
@@ -513,97 +516,97 @@ class Product
     function prepareParams()
     {
         // Общие параметры товара        
-        if (isset($_POST[model])) {
-            $this->model = $_POST[model];
+        if (isset($_POST['model'])) {
+            $this->model = $_POST['model'];
         }
-        if (isset($_POST[sku])) {
-            $this->sku = $_POST[sku];
+        if (isset($_POST['sku'])) {
+            $this->sku = $_POST['sku'];
         }
-        if (isset($_POST[upc])) {
-            $this->upc = $_POST[upc];
+        if (isset($_POST['upc'])) {
+            $this->upc = $_POST['upc'];
         }
-        if (isset($_POST[ean])) {
-            $this->ean = $_POST[ean];
+        if (isset($_POST['ean'])) {
+            $this->ean = $_POST['ean'];
         }
-        if (isset($_POST[jan])) {
-            $this->jan = $_POST[jan];
+        if (isset($_POST['jan'])) {
+            $this->jan = $_POST['jan'];
         }
-        if (isset($_POST[isbn])) {
-            $this->isbn = $_POST[isbn];
+        if (isset($_POST['isbn'])) {
+            $this->isbn = $_POST['isbn'];
         }
-        if (isset($_POST[mpn])) {
-            $this->mpn = $_POST[mpn];
+        if (isset($_POST['mpn'])) {
+            $this->mpn = $_POST['mpn'];
         }
-        if (isset($_POST[location])) {
-            $this->location = $_POST[location];
+        if (isset($_POST['location'])) {
+            $this->location = $_POST['location'];
         }
-        if (isset($_POST[quantity])) {
-            $this->quantity = $_POST[quantity];
+        if (isset($_POST['quantity'])) {
+            $this->quantity = $_POST['quantity'];
         }
-        if (isset($_POST[stock_status_id])) {
-            $this->stock_status_id = $_POST[stock_status_id];
+        if (isset($_POST['stock_status_id'])) {
+            $this->stock_status_id = $_POST['stock_status_id'];
         }
-        if (isset($_POST[image])) {
-            $this->image = $_POST[image];
+        if (isset($_POST['image'])) {
+            $this->image = $_POST['image'];
         }
-        if (isset($_POST[manufacturer_id])) {
-            $this->manufacturer_id = $_POST[manufacturer_id];
+        if (isset($_POST['manufacturer_id'])) {
+            $this->manufacturer_id = $_POST['manufacturer_id'];
         }
-        if (isset($_POST[shipping])) {
-            $this->shipping = $_POST[shipping];
+        if (isset($_POST['shipping'])) {
+            $this->shipping = $_POST['shipping'];
         }
-        if (isset($_POST[price])) {
-            $this->price = $_POST[price];
+        if (isset($_POST['price'])) {
+            $this->price = $_POST['price'];
         }
-        if (isset($_POST[points])) {
-            $this->points = $_POST[points];
+        if (isset($_POST['points'])) {
+            $this->points = $_POST['points'];
         }
-        if (isset($_POST[tax_class_id])) {
-            $this->tax_class_id = $_POST[tax_class_id];
+        if (isset($_POST['tax_class_id'])) {
+            $this->tax_class_id = $_POST['tax_class_id'];
         }
-        if (isset($_POST[date_available])) {
-            $this->date_available = $_POST[date_available];
+        if (isset($_POST['date_available'])) {
+            $this->date_available = $_POST['date_available'];
         }
-        if (isset($_POST[weight])) {
-            $this->weight = $_POST[weight];
+        if (isset($_POST['weight'])) {
+            $this->weight = $_POST['weight'];
         }
-        if (isset($_POST[weight_class_id])) {
-            $this->weight_class_id = $_POST[weight_class_id];
+        if (isset($_POST['weight_class_id'])) {
+            $this->weight_class_id = $_POST['weight_class_id'];
         }
-        if (isset($_POST[width])) {
-            $this->width = $_POST[width];
+        if (isset($_POST['width'])) {
+            $this->width = $_POST['width'];
         }
-        if (isset($_POST[height])) {
-            $this->height = $_POST[height];
+        if (isset($_POST['height'])) {
+            $this->height = $_POST['height'];
         }
-        if (isset($_POST[length_class_id])) {
-            $this->length_class_id = $_POST[length_class_id];
+        if (isset($_POST['length_class_id'])) {
+            $this->length_class_id = $_POST['length_class_id'];
         }
-        if (isset($_POST[subtract])) {
-            $this->subtract = $_POST[subtract];
+        if (isset($_POST['subtract'])) {
+            $this->subtract = $_POST['subtract'];
         }
-        if (isset($_POST[minimum])) {
-            $this->minimum = $_POST[minimum];
+        if (isset($_POST['minimum'])) {
+            $this->minimum = $_POST['minimum'];
         }
-        if (isset($_POST[sort_order])) {
-            $this->sort_order = $_POST[sort_order];
+        if (isset($_POST['sort_order'])) {
+            $this->sort_order = $_POST['sort_order'];
         }
-        if (isset($_POST[status])) {
-            $this->status = $_POST[status];
+        if (isset($_POST['status'])) {
+            $this->status = $_POST['status'];
         }
-        if (isset($_POST[viewed])) {
-            $this->viewed = $_POST[viewed];
+        if (isset($_POST['viewed'])) {
+            $this->viewed = $_POST['viewed'];
         }
-        if (isset($_POST[date_added])) {
-            $this->date_added = $_POST[date_added];
+        if (isset($_POST['date_added'])) {
+            $this->date_added = $_POST['date_added'];
         }
-        if (isset($_POST[date_modified])) {
-            $this->date_modified = $_POST[date_modified];
+        if (isset($_POST['date_modified'])) {
+            $this->date_modified = $_POST['date_modified'];
         }
         // Описание товара
         $this->descriptions[$this->language_id] = array(
-            "name" => $_POST[name],
-            "description" => $_POST[description],
+            "name" => $_POST['name'],
+            "description" => $_POST['description'],
             "tag" => '',
             "meta_title" => '',
             "meta_h1" => '',
@@ -611,23 +614,46 @@ class Product
             "meta_keyword" => ''
         );
         // Картинки
-        if (isset($_POST[images])) {
+        if (isset($_POST['images'])) {
             // images = 'img1|img2|img3'
             try {
-                $this->images = explode('|', $_POST[images]);
+                $this->images = explode('|', $_POST['images']);
             } catch (Exception $ex) {
                 MyLog::log("В товаре №$this->product_id КАРТИНКИ заданы с ошибками! POST_[images]=$_POST[images]", $this->error_file);
             }
         }
         // Категории
-        if (isset($_POST[categories])) {
+        if (isset($_POST['categories'])) {
             try {
-                $tt = explode('|', $_POST[categories]);
+                $tt = explode('|', $_POST['categories']);
                 foreach ($tt as $t) {
-                    $this->categories[] = $t;
+                    $this->categories_from_post[] = $t;
                 }
             } catch (Exception $ex) {
                 MyLog::log("В товаре №$this->product_id КАТЕГОРИИ заданы с ошибками! POST_[categories]=$_POST[categories]", $this->error_file);
+            }
+        }
+
+        // Атрибуты
+        // $_POST['attributes'] = "Характеристики:Артикул:13497|Характеристики:Код товара:94017|Характеристики:Дата поступления:29.09.2017|Характеристики:Издательство: Правило веры, Москва"
+        if (isset($_POST['attributes'])) {
+            try {
+                $tt = explode("|", $_POST['attributes']);
+                foreach ($tt as $attribute) {
+                    $t = explode(":", $attribute);
+                    // если есть тройка группа_атрибута:имя_атрибута:значение_атрибута, то добавляем в атрибут
+                    if (count($t) == 3) {
+                        $this->attributes[] = array(
+                            'group' => trim($t[0]),
+                            'name' => trim($t[1]),
+                            'val' => trim($t[2])
+                        );
+                    } else {
+                        throw new MyException('Неверный формат передачи атрибутов товара: ' . serialize($attribute));
+                    }
+                }
+            } catch (Exception $ex) {
+                throw new MyException("В товаре №$this->product_id АТРИБУТЫ заданы с ошибками!" . serialize($_POST[attributes]));
             }
         }
 
@@ -636,7 +662,6 @@ class Product
 
     function checkParams()
     {
-        echo "checkParams();<br>";
         // Имя
         if ($this->descriptions[$this->language_id]['name'] == '') {
             throw new MyException("Не указано имя. name=$this->name<br>");
@@ -668,7 +693,7 @@ class Product
                 }
                 $this->all_categories = new Categories($tt);
             } else {
-                throw new MyException("Ошибка в логике при запросе категорий из базы! ");
+                throw new MyException("Ошибка в логике в getAllCategoryFromDB() при запросе категорий из базы! ");
             }
         } catch (PDOException $ex) {
             throw new MyException("Ошибка при попытке получить все категории из базы в getAllCategoryFromDB()!");
@@ -679,14 +704,12 @@ class Product
 
     function mainPotok()
     {
-        echo "mainPotok();<br>";
-        $this->checkParams()->addProductToDB()->addDescriptionToDB()->addImagesToDB()->addLayoutToDB()->addMagazineToDB()->addCategoriesToDB()->setCategoriesToDB()->addCategoryPath()->addAttributesGroupToDB()->addAttributesToDB()->setAttributesToDB();
+        $this->checkParams()->addProductToDB()->addDescriptionToDB()->addImagesToDB()->addLayoutToDB()->addMagazineToDB();
+        $this->addCategoriesToDB()->setCategoriesToDB()->setAttributesToDB();
     }
 
     public function __invoke()
     {
         $this->mainPotok();
-        echo "<br>newCategories[]:<br>";
-        var_dump($this->newCategories);
     }
 }

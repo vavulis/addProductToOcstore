@@ -1,8 +1,7 @@
 <?php
 
 class MyLog
-{
-
+{   
     static function log($text, $log_file)
     {
         $fp = fopen($log_file, "a"); // Открываем файл в режиме записи
