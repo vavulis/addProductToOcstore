@@ -25,13 +25,36 @@ $str .= 'image=catalog/images/evangelskie-besedy-na-kazhdyj-den-goda-po-cerkovny
 $str .= 'images=img1.jpg|img2.jpg|img3.jpg|img4.jpg&';
 $str .= 'id_of_groups_of_attributes=5&';
 $str .= 'attributes=характеристики:цвет:красный|характеристики:пол:унисекс|характеристики:размер:45&';
+$str .= 'manufacturer=МинаДанил бренд&';
 $str .= 'description=<p>четкие колеса</p>';
 setPostFromString($str);
 
-for ($i = 0; $i < 50000; $i++) {
+//for ($i = 0; $i < 50000; $i++) {
+//    $product = new Product($dbHost, $dbLogin, $dbPassword, $dbName);
+//    $product();
+//    unset($product);
+//}
+
+function generateRandomString($length = 10) {
+    return substr(str_shuffle(str_repeat($x='0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', ceil($length/strlen($x)) )),1,$length);
+}
+
+for ($i = 0; $i < 10; $i++) {
+    $name = generateRandomString();
+    $price = rand(10, 5000);
+    $model = 'art_number_' . $i;
+    $categories = [];
+    for ($j=0; $j<rand(1,5); $j++) {
+        $categories[] = generateRandomString(rand(1,5));       
+    }
+    $categories = implode('|', $categories);
     $product = new Product($dbHost, $dbLogin, $dbPassword, $dbName);
     $product();
     unset($product);
+    var_dump($name);
+    var_dump($price);
+    var_dump($model);
+    var_dump($categories);    
 }
 
 echo '<p>Время выполнения скрипта: ' . round(microtime(true) - $start, 4) . ' сек.</p>';

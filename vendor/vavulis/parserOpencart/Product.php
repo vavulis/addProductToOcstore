@@ -4,6 +4,8 @@ require_once __ROOT__ . '/vendor/vavulis/errors/MyException.php';
 require_once __ROOT__ . '/vendor/vavulis/logs/MyLog.php';
 require_once __ROOT__ . '/vendor/vavulis/parserOpencart/Categories.php';
 require_once __ROOT__ . '/vendor/vavulis/parserOpencart/Attributes.php';
+require_once __ROOT__ . '/vendor/vavulis/parserOpencart/Manufacturers.php';
+require_once __ROOT__ . '/vendor/vavulis/parserOpencart/Price.php';
 
 /**
  * Класс ТОВАР
@@ -34,14 +36,15 @@ class Product
     var $manufacturer_id = 26; // 26
     var $shipping = 1; // 1
     var $price; // '419.0000'
+    var $markup = 100; // наценка в процентах
     var $points = 0; // 0
     var $tax_class_id = 0; // 0
     var $date_available = ''; // ''
-    var $weight = '550.00'; // '550.00'
+    var $weight = ''; // '550.00'
     var $weight_class_id = 2; // 2
-    var $length = '12.50'; // '12.50'
-    var $width = '17.00'; // '17.00'
-    var $height = '4.00'; // '4.00'
+    var $length = ''; // '12.50'
+    var $width = ''; // '17.00'
+    var $height = ''; // '4.00'
     var $length_class_id = 1; // 1
     var $subtract = 1; // 1
     var $minimum = 1; // 1
@@ -90,6 +93,7 @@ class Product
     var $newCategories = []; // type = arra of Category
     // Назначенный товару категории
     var $categories = []; // type = Categories
+    var $manufacturer = ''; // Производитель
 
     function prepareDB($dbHost, $dbLogin, $dbPassword, $dbName)
     {
@@ -221,8 +225,7 @@ class Product
 
             $stmt->bindParam(':product_id', $this->product_id);
             $stmt->bindParam(':image', $image);
-            foreach ($this->images as $t) {
-                $image = $this->images_prefix . $t;
+            foreach ($this->images as $image) {
                 $stmt->execute();
             }
             MyLog::log("Успешно добавлены КАРТИНКИ товара №$this->product_id !", $this->log_file);
@@ -512,12 +515,31 @@ class Product
         return $this;
     }
 
+    // /upload/iblock/385/385aadcafcdedc394201fb3bd0caa69d.jpg -> 385aadcafcdedc394201fb3bd0caa69d.jpg
+    function getShortNameOfUrl($url)
+    {
+        // $url должен быть строкой
+        if ((!is_string($url)) || ($url == '/') || (strlen($url) == 0)) {
+            return null;
+        }
+
+        $rest = substr($url, -1);
+        if ($rest === '/') {
+            $url = substr($url, 0, -1);
+        }
+
+        $tt = split('/', $url);
+        return $tt[count($tt) - 1];
+    }
+
     // Заполняем свойства класса из массива $_POST
     function prepareParams()
     {
         // Общие параметры товара        
         if (isset($_POST['model'])) {
             $this->model = $_POST['model'];
+            // убираем кавычки из имени товара и модели товара, ибо с кавычками товар не сохраняется из админки
+            $this->model = str_replace(["'", '"'], "", $this->model);
         }
         if (isset($_POST['sku'])) {
             $this->sku = $_POST['sku'];
@@ -547,7 +569,10 @@ class Product
             $this->stock_status_id = $_POST['stock_status_id'];
         }
         if (isset($_POST['image'])) {
-            $this->image = $_POST['image'];
+            if (!$shortImageUrl = $this->getShortNameOfUrl($_POST['image'])) {
+                throw new MyException('Неправильный формат url-картинки! URL = ' . serialize($_POST['image']) . 'POST = ' . serialize($_POST));
+            }
+            $this->image = $this->images_prefix . $shortImageUrl;
         }
         if (isset($_POST['manufacturer_id'])) {
             $this->manufacturer_id = $_POST['manufacturer_id'];
@@ -556,7 +581,17 @@ class Product
             $this->shipping = $_POST['shipping'];
         }
         if (isset($_POST['price'])) {
-            $this->price = $_POST['price'];
+            $price = new Price($_POST['price'], $this->markup);
+            $answer = $price->getPrice();
+            switch ($answer['status']) {
+                case 'error':
+                    throw new MyException($answer['msg']);
+                case 'ok':
+                    $this->price = $answer['correct_price'];
+                    break;
+                default :
+                    throw new MyException('Ошибка в логике!');
+            }
         }
         if (isset($_POST['points'])) {
             $this->points = $_POST['points'];
@@ -604,6 +639,8 @@ class Product
             $this->date_modified = $_POST['date_modified'];
         }
         // Описание товара
+        // убираем кавычки из имени товара и модели товара, ибо с кавычками товар не сохраняется из админки
+        $_POST['name'] = str_replace(["'", '"'], "", $_POST['name']);
         $this->descriptions[$this->language_id] = array(
             "name" => $_POST['name'],
             "description" => $_POST['description'],
@@ -617,7 +654,13 @@ class Product
         if (isset($_POST['images'])) {
             // images = 'img1|img2|img3'
             try {
-                $this->images = explode('|', $_POST['images']);
+                $tt = explode('|', $_POST['images']);
+                foreach ($tt as $t) {
+                    if (!$shortImageUrl = $this->getShortNameOfUrl($t)) {
+                        throw new MyException('Неправильный формат url-картинки! URL = ' . serialize($_POST['image']) . 'POST = ' . serialize($_POST));
+                    }
+                    $this->images[] = $this->images_prefix . $shortImageUrl;
+                }
             } catch (Exception $ex) {
                 MyLog::log("В товаре №$this->product_id КАРТИНКИ заданы с ошибками! POST_[images]=$_POST[images]", $this->error_file);
             }
@@ -655,6 +698,12 @@ class Product
             } catch (Exception $ex) {
                 throw new MyException("В товаре №$this->product_id АТРИБУТЫ заданы с ошибками!" . serialize($_POST[attributes]));
             }
+        }
+
+        // Производитель 
+        // $_POST['manufacturer'] = "SONY"
+        if (isset($_POST['manufacturer'])) {
+            $this->manufacturer = trim($_POST['manufacturer']);
         }
 
         return $this;
@@ -702,10 +751,20 @@ class Product
         return $this;
     }
 
+    // назначаем товару производителя, если он задан
+    private function setManufacturer()
+    {
+        if (is_string($this->manufacturer) && strlen($this->manufacturer) > 0) {
+            $manufacturers = new Manufacturers($this->dbh);
+            $manufacturers->setUpManufacturer($this->dbh, $this->product_id, $this->manufacturer);
+        }
+        return $this;
+    }
+
     function mainPotok()
     {
         $this->checkParams()->addProductToDB()->addDescriptionToDB()->addImagesToDB()->addLayoutToDB()->addMagazineToDB();
-        $this->addCategoriesToDB()->setCategoriesToDB()->setAttributesToDB();
+        $this->addCategoriesToDB()->setCategoriesToDB()->setAttributesToDB()->setManufacturer();
     }
 
     public function __invoke()

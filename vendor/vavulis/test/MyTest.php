@@ -23,6 +23,7 @@ abstract class MyTest
 
     public function setBankOfTests(array $bank_of_tests)
     {
+        $this->messages_buffer = []; // обнуляем
         $this->bank_of_tests = $bank_of_tests;
     }
 
@@ -40,9 +41,8 @@ abstract class MyTest
         echo "</ul>\n";
     }
 
-    public function __construct(array $bank_of_tests = [])
+    public function __construct()
     {
-        $this->setBankOfTests($bank_of_tests);
     }
 
     public function __invoke()

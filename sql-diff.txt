@@ -1,6 +1,6 @@
 1. Добавляем продукт
 INSERT INTO `oc_product` (`product_id`, `model`, `sku`, `upc`, `ean`, `jan`, `isbn`, `mpn`, `location`, `quantity`, `stock_status_id`, `image`, `manufacturer_id`, `shipping`, `price`, `points`, `tax_class_id`, `date_available`, `weight`, `weight_class_id`, `length`, `width`, `height`, `length_class_id`, `subtract`, `minimum`, `sort_order`, `status`, `viewed`, `date_added`, `date_modified`) VALUES
-('', '7938', '', '', '', '', '978-5-94759-201-6', '', '', 6, 7, 'catalog/images/evangelskie-besedy-na-kazhdyj-den-goda-po-cerkovnym-zachalam-main.jpg', 26, 1, '419.0000', 0, 0, '', '550.00', 2, '12.50', '17.00', '4.00', 1, 1, 1, 1, 1, 0, now(), '0000-00-00 00:00:00');
+('', '7938', '', '', '', '', '978-5-94759-201-6', '', '', 6, 7, 'catalog/images/evangelskie-besedy-na-kazhdyj-den-goda-po-cerkovnym-zachalam-main.jpg', 26, 1, '419.0000', 0, 0, '', '', 2, '', '', '', 1, 1, 1, 1, 1, 0, now(), '0000-00-00 00:00:00');
 
 2. Добавляем описание
 INSERT INTO `oc_product_description` (`product_id`, `language_id`, `name`, `description`, `tag`, `meta_title`, `meta_h1`, `meta_description`, `meta_keyword`) VALUES
@@ -64,4 +64,15 @@ INSERT INTO `oc_attribute` (`attribute_group_id`, `sort_order`) VALUES
 INSERT INTO `oc_product_attribute` (`product_id`, `attribute_id`, `language_id`, `text`) VALUES
 (1, 6, 1, '1975');
 
+14.  Добавляем производителя (бренд)
+INSERT INTO `oc_manufacturer` (`manufacturer_id`, `name`, `image`, `sort_order`) VALUES
+(11, 'minadanil brand', '', 0);
 
+INSERT INTO `oc_manufacturer_description` (`manufacturer_id`, `language_id`, `name`, `description`, `meta_title`, `meta_h1`, `meta_description`, `meta_keyword`) VALUES
+(11, 1, 'minadanil brand', '', 'minadanil brand', '', '', '');
+
+INSERT INTO `oc_manufacturer_to_store` (`manufacturer_id`, `store_id`) VALUES
+(11, 0);
+
+15. Назначаем производителя товару
+UPDATE oc_product SET manufacturer_id=10, date_modified=now() WHERE product_id = 50

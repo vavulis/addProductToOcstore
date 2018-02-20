@@ -209,7 +209,7 @@ class Attributes
             }
         }
     }
-   
+
     // ищет такой же атрибут в $this->attributes, если на находит - ищет такую же группу. возвращает найденные id группы_атрибутов и id атрибута
     public function findSimilarAttribute($group_name, $name)
     {
