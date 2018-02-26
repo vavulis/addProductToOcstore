@@ -1,0 +1,78 @@
+1. Добавил категорию kos_cat1
+INSERT INTO `oc_category` (`category_id`, `image`, `parent_id`, `top`, `column`, `sort_order`, `status`, `date_added`, `date_modified`) VALUES
+(94, '', 0, 0, 1, 0, 1, '2018-02-24 19:41:14', '2018-02-24 19:41:14');
+INSERT INTO `oc_category_description` (`category_id`, `language_id`, `name`, `description`, `meta_title`, `meta_description`, `meta_keyword`) VALUES
+(94, 2, 'kos_cat1', '', 'kos_cat1', '', '');
+INSERT INTO `oc_category_path` (`category_id`, `path_id`, `level`) VALUES
+(94, 94, 0);
+INSERT INTO `oc_category_to_layout` (`category_id`, `store_id`, `layout_id`) VALUES
+(94, 0, 0);
+INSERT INTO `oc_category_to_store` (`category_id`, `store_id`) VALUES
+(94, 0);
+
+2. Добавил категорию kos_cat2 с родителем kos_cat1
+INSERT INTO `oc_category` (`category_id`, `image`, `parent_id`, `top`, `column`, `sort_order`, `status`, `date_added`, `date_modified`) VALUES
+(95, '', 94, 0, 1, 0, 1, '2018-02-24 19:42:17', '2018-02-24 19:42:17');
+INSERT INTO `oc_category_description` (`category_id`, `language_id`, `name`, `description`, `meta_title`, `meta_description`, `meta_keyword`) VALUES
+(95, 2, 'kos_cat2', '', 'kos_cat2', '', '');
+INSERT INTO `oc_category_path` (`category_id`, `path_id`, `level`) VALUES
+(95, 94, 0),
+(95, 95, 1);
+INSERT INTO `oc_category_to_layout` (`category_id`, `store_id`, `layout_id`) VALUES
+(95, 0, 0);
+INSERT INTO `oc_category_to_store` (`category_id`, `store_id`) VALUES
+(95, 0);
+
+3. Создал группу категорий kos_ga1
+INSERT INTO `oc_attribute_group` (`attribute_group_id`, `sort_order`) VALUES
+(7, 0);
+INSERT INTO `oc_attribute_group_description` (`attribute_group_id`, `language_id`, `name`) VALUES
+(7, 2, 'kos_ga1');
+
+4. Создал атрибут kos_a1 в с группой kos_ga1
+INSERT INTO `oc_attribute` (`attribute_id`, `attribute_group_id`, `sort_order`) VALUES
+(12, 7, 0);
+INSERT INTO `oc_attribute_description` (`attribute_id`, `language_id`, `name`) VALUES
+(12, 2, 'kos_a1');
+
+5. Создал производителя kos_brand
+INSERT INTO `oc_manufacturer` (`manufacturer_id`, `name`, `image`, `sort_order`) VALUES
+(12, 'kos_brand', '', 0);
+INSERT INTO `oc_manufacturer_to_store` (`manufacturer_id`, `store_id`) VALUES
+(12, 0);
+
+6. Создал товар kos_tovar
+INSERT INTO `oc_product` (`product_id`, `model`, `sku`, `upc`, `ean`, `jan`, `isbn`, `mpn`, `location`, `quantity`, `stock_status_id`, `image`, `manufacturer_id`, `shipping`, `price`, `points`, `tax_class_id`, `date_available`, `weight`, `weight_class_id`, `length`, `width`, `height`, `length_class_id`, `subtract`, `minimum`, `sort_order`, `status`, `viewed`, `date_added`, `date_modified`, `price_zak`) VALUES
+(94, 'kos_tovar_model', '', '', '', '', '', '', '', 1, 6, '', 0, 1, 0.0000, 0, 0, '2018-02-24', 0.00000000, 1, 0.00000000, 0.00000000, 0.00000000, 1, 1, 1, 1, 1, 0, '2018-02-24 20:02:38', '2018-02-24 20:02:38', 0.0000);
+INSERT INTO `oc_product_description` (`product_id`, `language_id`, `name`, `description`, `tag`, `meta_title`, `meta_description`, `meta_keyword`) VALUES
+(94, 2, 'kos_tovar', '&lt;p&gt;kos_tovar_descr&lt;br&gt;&lt;/p&gt;', '', 'kos_tovar_meta_title', '', '');
+INSERT INTO `oc_product_to_layout` (`product_id`, `store_id`, `layout_id`) VALUES
+(94, 0, 0);
+INSERT INTO `oc_product_to_store` (`product_id`, `store_id`) VALUES
+(94, 0);
+
+7. Назначил производителя и группы kos_cat1, kos_cat2
+INSERT INTO `oc_product` (`product_id`, `model`, `sku`, `upc`, `ean`, `jan`, `isbn`, `mpn`, `location`, `quantity`, `stock_status_id`, `image`, `manufacturer_id`, `shipping`, `price`, `points`, `tax_class_id`, `date_available`, `weight`, `weight_class_id`, `length`, `width`, `height`, `length_class_id`, `subtract`, `minimum`, `sort_order`, `status`, `viewed`, `date_added`, `date_modified`, `price_zak`) VALUES
+(94, 'kos_tovar_model', '', '', '', '', '', '', '', 1, 6, '',        12        , 1, 0.0000, 0, 0, '2018-02-24', 0.00000000, 1, 0.00000000, 0.00000000, 0.00000000, 1, 1, 1, 1, 1, 0, '2018-02-24 20:02:38',     '2018-02-24 20:05:55',     0.0000);
+INSERT INTO `oc_product_to_category` (`product_id`, `category_id`) VALUES
+(94, 94),
+(94, 95);
+
+6b. Создал товар kos_product и зназу назначил ему картинки, производителя kos_brand и группы kos_cat1, kos_cat2
+INSERT INTO `oc_product` (`product_id`, `model`, `sku`, `upc`, `ean`, `jan`, `isbn`, `mpn`, `location`, `quantity`, `stock_status_id`, `image`, `manufacturer_id`, `shipping`, `price`, `points`, `tax_class_id`, `date_available`, `weight`, `weight_class_id`, `length`, `width`, `height`, `length_class_id`, `subtract`, `minimum`, `sort_order`, `status`, `viewed`, `date_added`, `date_modified`, `price_zak`) VALUES
+(94, 'kos_product_model', '', '', '', '', '', '', '', 1, 6, 'catalog/Artemiy.jpg', 12, 1, 0.0000, 0, 0, '2018-02-26', 0.00000000, 1, 0.00000000, 0.00000000, 0.00000000, 1, 1, 1, 1, 1, 0, '2018-02-26 12:46:52', '2018-02-26 12:46:52', 0.0000);
+INSERT INTO `oc_product_description` (`product_id`, `language_id`, `name`, `description`, `tag`, `meta_title`, `meta_description`, `meta_keyword`) VALUES
+(94, 2, 'kos_product', '', '', 'kos_product_meta_title', '', '');
+INSERT INTO `oc_product_image` (`product_image_id`, `product_id`, `image`, `sort_order`) VALUES
+(2493, 94, 'catalog/03_vstraiv-svetilniki-MR16.png', 0),
+(2494, 94, 'catalog/04_naklad-svetilniki-IP65.png', 0),
+(2495, 94, 'catalog/05_naklad-svetilniki-GX70.png', 0),
+(2496, 94, 'catalog/06_naklad-svetilniki-GX53.png', 0);
+INSERT INTO `oc_product_to_category` (`product_id`, `category_id`) VALUES
+(94, 94),
+(94, 95);
+INSERT INTO `oc_product_to_layout` (`product_id`, `store_id`, `layout_id`) VALUES
+(94, 0, 0);
+INSERT INTO `oc_product_to_store` (`product_id`, `store_id`) VALUES
+(94, 0);
+

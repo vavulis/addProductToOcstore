@@ -6,6 +6,7 @@ class Attributes
 {
 
     public $attributes = []; // Массив объектов Attribute, где ключи массива - id атбирутов. Тут будут атрибуты, которые надо бодавить и которые уже в базе (благодаря Attribute->exists_in_db можно понять)
+    private $language_id = 1; // чтобы не переписывать тесты...
 
     public function addAttributes(array $attributes)
     {
@@ -47,6 +48,11 @@ class Attributes
         } catch (PDOException $ex) {
             throw new MyException('Ошибка в mysql в updateAttributes()!');
         }
+    }
+
+    public function setLanguageId($language_id)
+    {
+        $this->language_id = $language_id;
     }
 
     function __construct(PDO $dbh, $product_id, array $attributes = [])
@@ -128,9 +134,10 @@ class Attributes
             $stmt->execute();
             $new_group_id = $dbh->lastInsertId();
 
-            $sql = "INSERT INTO `oc_attribute_group_description` (`attribute_group_id`, `language_id`, `name`) VALUES (:group_id, 1, :group_name)";
+            $sql = "INSERT INTO `oc_attribute_group_description` (`attribute_group_id`, `language_id`, `name`) VALUES (:group_id, :language_id, :group_name)";
             $stmt = $dbh->prepare($sql);
             $stmt->bindParam(':group_id', $new_group_id, PDO::PARAM_INT);
+            $stmt->bindParam(':language_id', $this->language_id, PDO::PARAM_INT);
             $stmt->bindParam(':group_name', $group_name, PDO::PARAM_STR);
             $stmt->execute();
             // надо добавить это событие в ЛОГИ
@@ -154,9 +161,10 @@ class Attributes
             $stmt->execute();
             $new_attribute_id = $dbh->lastInsertId();
 
-            $sql = "INSERT INTO `oc_attribute_description` (`attribute_id`, `language_id`, `name`) VALUES (:new_attribute_id, 1, :name)";
+            $sql = "INSERT INTO `oc_attribute_description` (`attribute_id`, `language_id`, `name`) VALUES (:new_attribute_id, :language_id, :name)";
             $stmt = $dbh->prepare($sql);
             $stmt->bindParam(':new_attribute_id', $new_attribute_id, PDO::PARAM_STR);
+            $stmt->bindParam(':language_id', $this->language_id, PDO::PARAM_INT);
             $stmt->bindParam(':name', $name, PDO::PARAM_STR);
             $stmt->execute();
             // надо добавить это событие в ЛОГИ
@@ -181,11 +189,12 @@ class Attributes
                 $sql = "UPDATE oc_product_attribute SET text = :new_val ";
                 $sql .= "WHERE oc_product_attribute.product_id = :product_id ";
                 $sql .= "AND oc_product_attribute.attribute_id = :attribute_id ";
-                $sql .= "AND oc_product_attribute.language_id = 1";
+                $sql .= "AND oc_product_attribute.language_id = :language_id";
                 $stmt = $dbh->prepare($sql);
                 $stmt->bindParam(':new_val', $attribute->val, PDO::PARAM_STR);
                 $stmt->bindParam(':product_id', $product_id, PDO::PARAM_INT);
                 $stmt->bindParam(':attribute_id', $attribute->id, PDO::PARAM_INT);
+                $stmt->bindParam(':language_id', $this->language_id, PDO::PARAM_INT);
                 $stmt->execute();
                 // надо добавить это событие в ЛОГИ
             } catch (PDOException $ex) {
@@ -194,10 +203,11 @@ class Attributes
         } else {
             if ($attribute->val) {
                 try {
-                    $sql = "INSERT INTO `oc_product_attribute` (`product_id`, `attribute_id`, `language_id`, `text`) VALUES (:product_id, :attribute_id, 1, :text)";
+                    $sql = "INSERT INTO `oc_product_attribute` (`product_id`, `attribute_id`, `language_id`, `text`) VALUES (:product_id, :attribute_id, :language_id, :text)";
                     $stmt = $dbh->prepare($sql);
                     $stmt->bindParam(':product_id', $product_id, PDO::PARAM_INT);
                     $stmt->bindParam(':attribute_id', $attribute->id, PDO::PARAM_INT);
+                    $stmt->bindParam(':language_id', $this->language_id, PDO::PARAM_INT);
                     $stmt->bindParam(':text', $attribute->val, PDO::PARAM_STR);
                     $stmt->execute();
                     // надо добавить это событие в ЛОГИ

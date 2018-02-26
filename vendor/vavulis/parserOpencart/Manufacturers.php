@@ -6,6 +6,12 @@ class Manufacturers
 {
 
     public $manufacturers = []; // массив объектов Manufacturer , где ключи массива - id производителя. Тут будут производители, которые надо добавить и которые уже в базе (благодаря Manufacturer->exists_in_db можно понять)
+    private $language_id = 1; // чтобы не переписывать тесты
+
+    public function setLanguageId($language_id)
+    {
+        $this->language_id = $language_id;
+    }
 
     private function addManufacturers(array $manufacturers)
     {
@@ -122,9 +128,10 @@ class Manufacturers
             $stmt->bindParam(':name', $manufacturer_name, PDO::PARAM_STR);
             $stmt->execute();
             $new_manufacturer_id = $dbh->lastInsertId();
-            $sql2 = "INSERT INTO `oc_manufacturer_description` (`manufacturer_id`, `language_id`, `name`, `description`, `meta_title`, `meta_h1`, `meta_description`, `meta_keyword`) VALUES (:manufacturer_id, 1, :name, '', '', '', '', '')";
+            $sql2 = "INSERT INTO `oc_manufacturer_description` (`manufacturer_id`, `language_id`, `name`, `description`, `meta_title`, `meta_h1`, `meta_description`, `meta_keyword`) VALUES (:manufacturer_id, :language_id, :name, '', '', '', '', '')";
             $stmt = $dbh->prepare($sql2);
             $stmt->bindParam(':manufacturer_id', $new_manufacturer_id, PDO::PARAM_INT);
+            $stmt->bindParam(':language_id', $this->language_id, PDO::PARAM_INT);
             $stmt->bindParam(':name', $manufacturer_name, PDO::PARAM_STR);
             $stmt->execute();
             $sql3 = "INSERT INTO `oc_manufacturer_to_store` (`manufacturer_id`, `store_id`) VALUES (:manufacturer_id, 0)";

@@ -14,6 +14,8 @@ require_once __ROOT__ . '/vendor/vavulis/parserOpencart/Price.php';
 class Product
 {
 
+    // Версия opencart (ocstore2.3, opencart3.0). Задается в config.php
+    var $oc_version = '';
     // БД
     var $dbh; // Дескриптор подключения к БД
     var $dbHost = '';
@@ -65,7 +67,7 @@ class Product
 //        );
     var $descriptions = [];
     // Язык
-    var $language_id = 1; // 1 - Русский
+    var $language_id;
     // Картинки товара. Массив названий картинок
     var $images = [];
     // Префикс путей картинок
@@ -112,9 +114,55 @@ class Product
         }
     }
 
-    // Конструктор класса
-    function __construct($dbHost, $dbLogin, $dbPassword, $dbName)
+    private function isBadSymbols($bad_symbols, $str)
     {
+        $str_array = str_split($str);
+        foreach ($bad_symbols as $bs) {
+            foreach ($str_array as $sa) {
+                if ($bs === $sa) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    // $_POST['images'] = 'img1.jpg|img2.jpg|img3.jpg|img4.jpg';
+    // $image = getImageFromImages($_POST['images']);
+    // echo $image; // img1.jpg
+    private function getImageFromImagesTest($images)
+    {
+        if (!is_string($images)) {
+            return null;
+        }
+        $images = str_replace(' ', '', $images);
+        if (($images === '|') || ($images === '')) {
+            return null;
+        }
+        $tt = explode('|', $images);
+        $image = $tt[0];
+        if (($image === '') || ($this->isBadSymbols(['$', '#', ';', '!', ',', '@', '%', '~', '`', ':', '&', '<', '>', '[', ']', '/', '\\'], $image))) {
+            return null;
+        }
+        return $image;
+    }
+
+    // Конструктор класса
+    function __construct($dbHost, $dbLogin, $dbPassword, $dbName, $oc_version, $language_id)
+    {
+        if (!isset($oc_version)) {
+            throw new MyException("Ошибка в параметрах в config.php! Не задана ВЕРСИЯ opencart!");
+        }
+        switch ($oc_version) {
+            case OCSTORE23:
+                $this->oc_version = OCSTORE23;
+                break;
+            case OPENCART30:
+                $this->oc_version = OPENCART30;
+                break;
+            default :
+                throw new MyException("Ошибка в параметрах в config.php! Не правильно задана ВЕРСИЯ opencart!");
+        }
         if (!isset($dbHost) || $dbHost == '') {
             throw new MyException("Ошибка в параметрах подключения к БД! Не задан ХОСТ!");
         }
@@ -131,7 +179,9 @@ class Product
         $this->dbLogin = $dbLogin;
         $this->dbPassword = $dbPassword;
         $this->dbName = $dbName;
-
+        
+        $this->language_id = $language_id;
+        
         // Подключаемся к базе
         $this->prepareDB();
 
@@ -277,10 +327,12 @@ class Product
             $last_id = $this->dbh->lastInsertId();
 
             $sql2 = "INSERT INTO `oc_category_description` (`category_id`, `language_id`, `name`, `description`, `meta_title`, `meta_h1`, `meta_description`, `meta_keyword`)";
-            $sql2 .= " VALUES (:category_id, 1, :name, '', '', '', '', '')";
+            $sql2 .= " VALUES (:category_id, :language_id, :name, '', :meta_title, '', '', '')";
             $stmt2 = $this->dbh->prepare($sql2);
             $stmt2->bindParam(':category_id', $last_id, PDO::PARAM_INT);
+            $stmt2->bindParam(':language_id', $this->language_id, PDO::PARAM_INT);
             $stmt2->bindParam(':name', $name, PDO::PARAM_STR);
+            $stmt2->bindParam(':meta_title', $name, PDO::PARAM_STR);
             $stmt2->execute();
 
             $sql3 = "INSERT INTO `oc_category_to_store` (`category_id`, `store_id`) VALUES (:category_id, 0)";
@@ -292,6 +344,13 @@ class Product
             $stmt4 = $this->dbh->prepare($sql4);
             $stmt4->bindParam(':category_id', $last_id, PDO::PARAM_INT);
             $stmt4->execute();
+
+            if ($this->oc_version === OPENCART30) {
+                $sql5 = "INSERT INTO `oc_category_to_layout` (`category_id`, `store_id`, `layout_id`) VALUES (:category_id, 0, 0)";
+                $stmt5 = $this->dbh->prepare($sql5);
+                $stmt5->bindParam(':category_id', $last_id, PDO::PARAM_INT);
+                $stmt5->execute();
+            }
 
             $this->dbh->commit();
             MyLog::log("Успешно создана категория '$name' с id='$last_id'", $this->log_file);
@@ -504,6 +563,7 @@ class Product
     function setAttributesToDB()
     {
         $attributes = new Attributes($this->dbh, $this->product_id);
+        $attributes->setLanguageId($this->language_id);
         $attributes->setAttributesToProduct($this->dbh, $this->product_id, $this->attributes);
         return $this;
     }
@@ -528,7 +588,7 @@ class Product
             $url = substr($url, 0, -1);
         }
 
-        $tt = split('/', $url);
+        $tt = explode('/', $url);
         return $tt[count($tt) - 1];
     }
 
@@ -568,9 +628,16 @@ class Product
         if (isset($_POST['stock_status_id'])) {
             $this->stock_status_id = $_POST['stock_status_id'];
         }
+        // Если не задана image и корректно заданы images - назначить image первую картинку из images
+        if ((!isset($_POST['image']) || ($_POST['image']) === '')) {
+            if ($image = $this->getImageFromImagesTest($_POST['images'])) {
+                $_POST['image'] = $image;
+                MyLog::log('Основной картирной назначили картинку из дополнительных картинок! tag=newimage. POST=' . serialize($_POST), $this->log_file);
+            }
+        }
         if (isset($_POST['image'])) {
-            if (!$shortImageUrl = $this->getShortNameOfUrl($_POST['image'])) {
-                throw new MyException('Неправильный формат url-картинки! URL = ' . serialize($_POST['image']) . 'POST = ' . serialize($_POST));
+            if (!$shortImageUrl = $this->getShortNameOfUrl($_POST['images'])) {
+                throw new MyException('Неправильный формат url-картинки! URL = ' . serialize($_POST['images']) . 'POST = ' . serialize($_POST));
             }
             $this->image = $this->images_prefix . $shortImageUrl;
         }
@@ -645,7 +712,7 @@ class Product
             "name" => $_POST['name'],
             "description" => $_POST['description'],
             "tag" => '',
-            "meta_title" => '',
+            "meta_title" => $_POST['name'],
             "meta_h1" => '',
             "meta_description" => '',
             "meta_keyword" => ''
@@ -719,6 +786,7 @@ class Product
         if ($this->model == '') {
             throw new MyException("Не указана модель. model=$this->model");
         }
+
         return $this;
     }
 
@@ -756,6 +824,7 @@ class Product
     {
         if (is_string($this->manufacturer) && strlen($this->manufacturer) > 0) {
             $manufacturers = new Manufacturers($this->dbh);
+            $manufacturers->setLanguageId($this->language_id);
             $manufacturers->setUpManufacturer($this->dbh, $this->product_id, $this->manufacturer);
         }
         return $this;

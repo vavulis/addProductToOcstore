@@ -7,7 +7,7 @@ require_once __ROOT__ . '/vendor/vavulis/logs/MyLog.php';
 require_once __ROOT__ . '/vendor/vavulis/errors/MyException.php';
 require_once __ROOT__ . '/vendor/vavulis/parserOpencart/Product.php';
 
-$product = new Product($dbHost, $dbLogin, $dbPassword, $dbName);
+$product = new Product($dbHost, $dbLogin, $dbPassword, $dbName, $oc_version, $language_id);
 $product();
 
 

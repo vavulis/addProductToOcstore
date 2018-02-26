@@ -67,7 +67,7 @@ class ShortNameOfUrlTest extends MyTest
             $url = substr($url, 0, -1);
         }
 
-        $tt = split('/', $url);
+        $tt = explode('/', $url);
         return $tt[count($tt) - 1];
     }
 
