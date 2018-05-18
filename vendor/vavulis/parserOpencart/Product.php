@@ -179,9 +179,9 @@ class Product
         $this->dbLogin = $dbLogin;
         $this->dbPassword = $dbPassword;
         $this->dbName = $dbName;
-        
+
         $this->language_id = $language_id;
-        
+
         // Подключаемся к базе
         $this->prepareDB();
 
@@ -241,21 +241,38 @@ class Product
 
     function addDescriptionToDB()
     {
-        $sql = "INSERT INTO oc_product_description (product_id, language_id, name, description, tag, meta_title, meta_h1, meta_description, meta_keyword)";
-        $sql .= " VALUES (:product_id, :language_id, :name, :description, :tag, :meta_title, :meta_h1, :meta_description, :meta_keyword)";
-        $stmt = $this->dbh->prepare($sql);
-        $param = array(
-            'product_id' => $this->product_id,
-            'language_id' => $this->language_id,
-            'name' => $this->descriptions[$this->language_id]['name'],
-            'description' => $this->descriptions[$this->language_id]['description'],
-            'tag' => $this->descriptions[$this->language_id]['tag'],
-            'meta_title' => $this->descriptions[$this->language_id]['meta_title'],
-            'meta_h1' => $this->descriptions[$this->language_id]['meta_h1'],
-            'meta_description' => $this->descriptions[$this->language_id]['meta_description'],
-            'meta_keyword' => $this->descriptions[$this->language_id]['meta_keyword']
-        );
-
+        if ($this->oc_version == OCSTORE23) {
+            $sql = "INSERT INTO oc_product_description (product_id, language_id, name, description, tag, meta_title, meta_h1, meta_description, meta_keyword)";
+            $sql .= " VALUES (:product_id, :language_id, :name, :description, :tag, :meta_title, :meta_h1, :meta_description, :meta_keyword)";
+            $stmt = $this->dbh->prepare($sql);
+            $param = array(
+                'product_id' => $this->product_id,
+                'language_id' => $this->language_id,
+                'name' => $this->descriptions[$this->language_id]['name'],
+                'description' => $this->descriptions[$this->language_id]['description'],
+                'tag' => $this->descriptions[$this->language_id]['tag'],
+                'meta_title' => $this->descriptions[$this->language_id]['meta_title'],
+                'meta_h1' => $this->descriptions[$this->language_id]['meta_h1'],
+                'meta_description' => $this->descriptions[$this->language_id]['meta_description'],
+                'meta_keyword' => $this->descriptions[$this->language_id]['meta_keyword']
+            );
+        } elseif ($this->oc_version == OPENCART30) {
+            $sql = "INSERT INTO oc_product_description (product_id, language_id, name, description, tag, meta_title, meta_description, meta_keyword)";
+            $sql .= " VALUES (:product_id, :language_id, :name, :description, :tag, :meta_title, :meta_description, :meta_keyword)";
+            $stmt = $this->dbh->prepare($sql);
+            $param = array(
+                'product_id' => $this->product_id,
+                'language_id' => $this->language_id,
+                'name' => $this->descriptions[$this->language_id]['name'],
+                'description' => $this->descriptions[$this->language_id]['description'],
+                'tag' => $this->descriptions[$this->language_id]['tag'],
+                'meta_title' => $this->descriptions[$this->language_id]['meta_title'],
+                'meta_description' => $this->descriptions[$this->language_id]['meta_description'],
+                'meta_keyword' => $this->descriptions[$this->language_id]['meta_keyword']
+            );
+        } else {
+            throw new MyException('Ошибка в логике! Версия опенкарт может быть только OCSTORE23 или OPENCART30!');
+        }
         try {
             $stmt->execute($param);
             MyLog::log("Успешно добавлено ОПИСАНИЕ товара №$this->product_id !", $this->log_file);
@@ -317,7 +334,6 @@ class Product
     private function addCategoryToDB($name, $parent_id)
     {
         try {
-            $this->dbh->beginTransaction();
             $sql = "INSERT INTO `oc_category` (`category_id`, `image`, `parent_id`, `top`, `column`, `sort_order`, `status`, `date_added`, `date_modified`)";
             $sql .= " VALUES ('', '', :parent_id, 0, 1, 0, 1, now(), now())";
             $stmt = $this->dbh->prepare($sql);
@@ -326,15 +342,27 @@ class Product
 
             $last_id = $this->dbh->lastInsertId();
 
-            $sql2 = "INSERT INTO `oc_category_description` (`category_id`, `language_id`, `name`, `description`, `meta_title`, `meta_h1`, `meta_description`, `meta_keyword`)";
-            $sql2 .= " VALUES (:category_id, :language_id, :name, '', :meta_title, '', '', '')";
-            $stmt2 = $this->dbh->prepare($sql2);
-            $stmt2->bindParam(':category_id', $last_id, PDO::PARAM_INT);
-            $stmt2->bindParam(':language_id', $this->language_id, PDO::PARAM_INT);
-            $stmt2->bindParam(':name', $name, PDO::PARAM_STR);
-            $stmt2->bindParam(':meta_title', $name, PDO::PARAM_STR);
-            $stmt2->execute();
-
+            if ($this->oc_version == OCSTORE23) {
+                $sql2 = "INSERT INTO `oc_category_description` (`category_id`, `language_id`, `name`, `description`, `meta_title`, `meta_h1`, `meta_description`, `meta_keyword`)";
+                $sql2 .= " VALUES (:category_id, :language_id, :name, '', :meta_title, '', '', '')";
+                $stmt2 = $this->dbh->prepare($sql2);
+                $stmt2->bindParam(':category_id', $last_id, PDO::PARAM_INT);
+                $stmt2->bindParam(':language_id', $this->language_id, PDO::PARAM_INT);
+                $stmt2->bindParam(':name', $name, PDO::PARAM_STR);
+                $stmt2->bindParam(':meta_title', $name, PDO::PARAM_STR);
+                $stmt2->execute();
+            } elseif ($this->oc_version == OPENCART30) {
+                $sql2 = "INSERT INTO `oc_category_description` (`category_id`, `language_id`, `name`, `description`, `meta_title`, `meta_description`, `meta_keyword`)";
+                $sql2 .= " VALUES (:category_id, :language_id, :name, '', :meta_title, '', '')";
+                $stmt2 = $this->dbh->prepare($sql2);
+                $stmt2->bindParam(':category_id', $last_id, PDO::PARAM_INT);
+                $stmt2->bindParam(':language_id', $this->language_id, PDO::PARAM_INT);
+                $stmt2->bindParam(':name', $name, PDO::PARAM_STR);
+                $stmt2->bindParam(':meta_title', $name, PDO::PARAM_STR);
+                $stmt2->execute();
+            } else {
+                throw new MyException('Ошибка в логике! Версия опенкарт может быть только 2х типов: opencart3 или ocstore23!');
+            }
             $sql3 = "INSERT INTO `oc_category_to_store` (`category_id`, `store_id`) VALUES (:category_id, 0)";
             $stmt3 = $this->dbh->prepare($sql3);
             $stmt3->bindParam(':category_id', $last_id, PDO::PARAM_INT);
@@ -345,19 +373,10 @@ class Product
             $stmt4->bindParam(':category_id', $last_id, PDO::PARAM_INT);
             $stmt4->execute();
 
-            if ($this->oc_version === OPENCART30) {
-                $sql5 = "INSERT INTO `oc_category_to_layout` (`category_id`, `store_id`, `layout_id`) VALUES (:category_id, 0, 0)";
-                $stmt5 = $this->dbh->prepare($sql5);
-                $stmt5->bindParam(':category_id', $last_id, PDO::PARAM_INT);
-                $stmt5->execute();
-            }
-
-            $this->dbh->commit();
             MyLog::log("Успешно создана категория '$name' с id='$last_id'", $this->log_file);
             return $last_id;
         } catch (PDOException $e) {
             MyLog::log("Ошибка в заполнении категории товара ID = $this->product_id! Имя категории = $name, id = $id, parent_id = $parent_id... " . $e->getMessage(), $this->error_file);
-            $this->dbh->rollback();
         }
     }
 
@@ -517,32 +536,62 @@ class Product
                 $cnt = count($this->all_categories->getCategories());
                 if ($cnt > 0) {
                     $ids = $this->all_categories->getIdsByNames($this->categories_from_post);
-                    // назначаем товару категории из $ids
-                    for ($i = count($ids) - 1; $i >= 0; $i--) {
-                        if ($i == count($ids) - 1) {
-                            $sql = "INSERT INTO `oc_product_to_category` (`product_id`, `category_id`, `main_category`) VALUES (:product_id, :last_id, 1)";
-                        } else {
-                            $sql = "INSERT INTO `oc_product_to_category` (`product_id`, `category_id`, `main_category`) VALUES (:product_id, :last_id, 0)";
-                        }
-                        $stmt = $this->dbh->prepare($sql);
-                        $stmt->bindParam(':product_id', $this->product_id, PDO::PARAM_INT);
-                        $stmt->bindParam(':last_id', intval($ids[$i]), PDO::PARAM_INT);
-                        $stmt->execute();
-                        MyLog::log("Успешно назначена категория №$ids[$i] товару №$this->product_id!", $this->log_file);
-                    }
-                } elseif ($cnt == 0) {
-                    if (count($this->newCategories) > 0) {
-                        for ($i = count($this->newCategories) - 1; $i >= 0; $i--) {
-                            if ($i == count($this->newCategories) - 1) {
+                    if ($this->oc_version == OCSTORE23) {
+                        // назначаем товару категории из $ids
+                        for ($i = count($ids) - 1; $i >= 0; $i--) {
+                            if ($i == count($ids) - 1) {
                                 $sql = "INSERT INTO `oc_product_to_category` (`product_id`, `category_id`, `main_category`) VALUES (:product_id, :last_id, 1)";
                             } else {
                                 $sql = "INSERT INTO `oc_product_to_category` (`product_id`, `category_id`, `main_category`) VALUES (:product_id, :last_id, 0)";
                             }
                             $stmt = $this->dbh->prepare($sql);
                             $stmt->bindParam(':product_id', $this->product_id, PDO::PARAM_INT);
-                            $stmt->bindParam(':last_id', intval($this->newCategories[$i]->id), PDO::PARAM_INT);
+                            $stmt->bindParam(':last_id', intval($ids[$i]), PDO::PARAM_INT);
                             $stmt->execute();
-                            MyLog::log("Успешно назначена категория №$this->newCategories[$i]->id товару №$this->product_id!", $this->log_file);
+                            MyLog::log("Успешно назначена категория №$ids[$i] товару №$this->product_id!", $this->log_file);
+                        }
+                    } elseif ($this->oc_version == OPENCART30) {
+                        // назначаем товару категории из $ids
+                        for ($i = count($ids) - 1; $i >= 0; $i--) {
+                            $sql = "INSERT INTO `oc_product_to_category` (`product_id`, `category_id`) VALUES (:product_id, :last_id)";
+                            $stmt = $this->dbh->prepare($sql);
+                            $stmt->bindParam(':product_id', $this->product_id, PDO::PARAM_INT);
+                            $stmt->bindParam(':last_id', intval($ids[$i]), PDO::PARAM_INT);
+                            $stmt->execute();
+                            MyLog::log("Успешно назначена категория №$ids[$i] товару №$this->product_id!", $this->log_file);
+                        }
+                    } else {
+                        throw new MyException('Ошибка в логике! Версия опенкарт может быть только OCSTORE23 или OPENCART30!');
+                    }
+                } elseif ($cnt == 0) {
+                    if (count($this->newCategories) > 0) {
+
+                        if ($this->oc_version == OCSTORE23) {
+                            for ($i = count($this->newCategories) - 1; $i >= 0; $i--) {
+                                if ($i == count($this->newCategories) - 1) {
+                                    $sql = "INSERT INTO `oc_product_to_category` (`product_id`, `category_id`, `main_category`) VALUES (:product_id, :last_id, 1)";
+                                } else {
+                                    $sql = "INSERT INTO `oc_product_to_category` (`product_id`, `category_id`, `main_category`) VALUES (:product_id, :last_id, 0)";
+                                }
+                                $stmt = $this->dbh->prepare($sql);
+                                $stmt->bindParam(':product_id', $this->product_id, PDO::PARAM_INT);
+                                $last_id = intval($this->newCategories[$i]->id);
+                                $stmt->bindParam(':last_id', $last_id, PDO::PARAM_INT);
+                                $stmt->execute();
+                                MyLog::log("Успешно назначена категория №$this->newCategories[$i]->id товару №$this->product_id!", $this->log_file);
+                            }
+                        } elseif ($this->oc_version == OPENCART30) {
+                            for ($i = count($this->newCategories) - 1; $i >= 0; $i--) {
+                                $sql = "INSERT INTO `oc_product_to_category` (`product_id`, `category_id`) VALUES (:product_id, :last_id)";
+                                $stmt = $this->dbh->prepare($sql);
+                                $stmt->bindParam(':product_id', $this->product_id, PDO::PARAM_INT);
+                                $last_id = intval($this->newCategories[$i]->id);
+                                $stmt->bindParam(':last_id', $last_id, PDO::PARAM_INT);
+                                $stmt->execute();
+                                MyLog::log("Успешно назначена категория №$this->newCategories[$i]->id товару №$this->product_id!", $this->log_file);
+                            }
+                        } else {
+                            throw new MyException('Ошибка в логике! Версия опенкарт может быть только OCSTORE23 или OPENCART30!');
                         }
                     } else {
                         throw new MyException('Ошибка в логике в setCategoriesToDB()!');
@@ -712,10 +761,10 @@ class Product
             "name" => $_POST['name'],
             "description" => $_POST['description'],
             "tag" => '',
-            "meta_title" => $_POST['name'],
-            "meta_h1" => '',
-            "meta_description" => '',
-            "meta_keyword" => ''
+            "meta_title" => $_POST['name'] . ' купить по цене от производителя с доставкой по России',
+            "meta_h1" => $_POST['name'],
+            "meta_description" => "В магазине ВашаСумка.РФ вы можете купить недорого модные сумки, рюкзаки и клачи из натуральной кожи по ценам от производителя с доставкой по России",
+            "meta_keyword" => 'сумка купить,сумка интернет магазин,сумка женский купить,сумка распродажа,сумки женские кожаные,сумка michael kors,сумка furla,купить кожаную сумку женскую,сумки женские кожаные распродажа,сумки женские кожаные италия,сумки женские кожаные бренды,сумка кожаная женская италия распродажа,сумки женские кожаные италия бренды,сумки женские кожаные бренды распродажа,сумки женские кожаные италия бренды распродажа,сумки брендовые женские,кожаные сумки женские +из натуральной,кожаные сумки женские +из натуральной кожи,сумки женские кожаные недорого,сумки женские брендовые кожаные,сумка женская брендовая купить'
         );
         // Картинки
         if (isset($_POST['images'])) {
