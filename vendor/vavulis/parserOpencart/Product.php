@@ -685,8 +685,8 @@ class Product
             }
         }
         if (isset($_POST['image'])) {
-            if (!$shortImageUrl = $this->getShortNameOfUrl($_POST['images'])) {
-                throw new MyException('Неправильный формат url-картинки! URL = ' . serialize($_POST['images']) . 'POST = ' . serialize($_POST));
+            if (!$shortImageUrl = $this->getShortNameOfUrl($_POST['image'])) {
+                throw new MyException('1Неправильный формат url-картинки! URL = ' . serialize($_POST['image']) . 'POST = ' . serialize($_POST));
             }
             $this->image = $this->images_prefix . $shortImageUrl;
         }
@@ -773,7 +773,7 @@ class Product
                 $tt = explode('|', $_POST['images']);
                 foreach ($tt as $t) {
                     if (!$shortImageUrl = $this->getShortNameOfUrl($t)) {
-                        throw new MyException('Неправильный формат url-картинки! URL = ' . serialize($_POST['image']) . 'POST = ' . serialize($_POST));
+                        throw new MyException('2Неправильный формат url-картинки! URL = ' . serialize($_POST['images']) . 'POST = ' . serialize($_POST));
                     }
                     $this->images[] = $this->images_prefix . $shortImageUrl;
                 }
@@ -786,7 +786,7 @@ class Product
             try {
                 $tt = explode('|', $_POST['categories']);
                 foreach ($tt as $t) {
-                    $this->categories_from_post[] = $t;
+                    $this->categories_from_post[] = trim($t);
                 }
             } catch (Exception $ex) {
                 MyLog::log("В товаре №$this->product_id КАТЕГОРИИ заданы с ошибками! POST_[categories]=$_POST[categories]", $this->error_file);
