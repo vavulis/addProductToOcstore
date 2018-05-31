@@ -38,7 +38,7 @@ class Product
     var $manufacturer_id = 26; // 26
     var $shipping = 1; // 1
     var $price; // '419.0000'
-    var $markup = 100; // наценка в процентах
+    var $markup = 0; // наценка в процентах
     var $points = 0; // 0
     var $tax_class_id = 0; // 0
     var $date_available = ''; // ''
@@ -701,7 +701,7 @@ class Product
             $answer = $price->getPrice();
             switch ($answer['status']) {
                 case 'error':
-                    throw new MyException($answer['msg']);
+                    throw new MyException($answer['msg'] . serialize($_POST));
                 case 'ok':
                     $this->price = $answer['correct_price'];
                     break;
@@ -761,13 +761,13 @@ class Product
             "name" => $_POST['name'],
             "description" => $_POST['description'],
             "tag" => '',
-            "meta_title" => $_POST['name'] . ' купить по цене от производителя с доставкой по России',
+            "meta_title" => $_POST['name'],
             "meta_h1" => $_POST['name'],
-            "meta_description" => "В магазине ВашаСумка.РФ вы можете купить недорого модные сумки, рюкзаки и клачи из натуральной кожи по ценам от производителя с доставкой по России",
-            "meta_keyword" => 'сумка купить,сумка интернет магазин,сумка женский купить,сумка распродажа,сумки женские кожаные,сумка michael kors,сумка furla,купить кожаную сумку женскую,сумки женские кожаные распродажа,сумки женские кожаные италия,сумки женские кожаные бренды,сумка кожаная женская италия распродажа,сумки женские кожаные италия бренды,сумки женские кожаные бренды распродажа,сумки женские кожаные италия бренды распродажа,сумки брендовые женские,кожаные сумки женские +из натуральной,кожаные сумки женские +из натуральной кожи,сумки женские кожаные недорого,сумки женские брендовые кожаные,сумка женская брендовая купить'
+            "meta_description" => "",
+            "meta_keyword" => ''
         );
         // Картинки
-        if (isset($_POST['images'])) {
+        if (isset($_POST['images']) && trim($_POST['images'])!='' ) {
             // images = 'img1|img2|img3'
             try {
                 $tt = explode('|', $_POST['images']);
